@@ -53,10 +53,25 @@ app.post('/api/users/add-money', checkAuth, async (req, res) => {
 
 // Khoá / Mở khoá tài khoản
 app.post('/api/users/toggle-lock', checkAuth, async (req, res) => {
-    const { id, status } = req.body; // status 1 là khoá, 0 là bình thường (tuỳ server)
+    const { id, status } = req.body;
     try {
         await pool.query('UPDATE users SET status = ? WHERE id = ?', [status, id]);
         res.json({ success: true, message: 'Đã đổi trạng thái thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Tạo tài khoản mới
+app.post('/api/users/create', checkAuth, async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Thiếu tài khoản hoặc mật khẩu' });
+    try {
+        const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+        if (existing.length > 0) return res.status(400).json({ error: 'Tên tài khoản đã tồn tại' });
+        
+        await pool.query('INSERT INTO users (username, password, luong, coin) VALUES (?, ?, 0, 0)', [username, password]);
+        res.json({ success: true, message: 'Tạo tài khoản thành công!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -110,35 +125,38 @@ app.post('/api/players/add-money', checkAuth, async (req, res) => {
 
 // Thêm vật phẩm vào túi đồ nhân vật (Yêu cầu nhân vật offline)
 app.post('/api/players/add-item', checkAuth, async (req, res) => {
-    const { id, itemId, quantity, isLock } = req.body;
+    const { id, itemId, quantity, isLock, upgrade } = req.body;
     try {
         // Lấy túi đồ hiện tại
         const [rows] = await pool.query('SELECT bag FROM players WHERE id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
         
         let bag = [];
-        try {
-            bag = JSON.parse(rows[0].bag);
-        } catch (e) {
-            bag = [];
-        }
+        try { bag = JSON.parse(rows[0].bag); } catch (e) { bag = []; }
 
-        // Cấu trúc một Item cơ bản trong NSO
         const newItem = {
             id: parseInt(itemId),
             quantity: parseInt(quantity) || 1,
             isLock: isLock ? true : false,
-            upgrade: 0,
+            upgrade: parseInt(upgrade) || 0,
             sys: 0,
-            options: [] // Chưa hỗ trợ buff chỉ số cụ thể qua form nhanh
+            options: []
         };
         
-        // Thêm vào túi (Lưu ý: Không kiểm tra số ô trống túi đồ, admin tự chịu trách nhiệm)
         bag.push(newItem);
-        
-        // Lưu lại DB
         await pool.query('UPDATE players SET bag = ? WHERE id = ?', [JSON.stringify(bag), id]);
-        res.json({ success: true, message: 'Đã buff Item vào túi thành công! Vui lòng vào game kiểm tra (nhân vật phải đang Offline trước khi buff).' });
+        res.json({ success: true, message: 'Đã buff Item vào túi thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Set cấp độ nhân vật
+app.post('/api/players/set-level', checkAuth, async (req, res) => {
+    const { id, level } = req.body;
+    try {
+        await pool.query('UPDATE players SET level = ? WHERE id = ?', [parseInt(level) || 1, id]);
+        res.json({ success: true, message: 'Đã chỉnh cấp độ thành công!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

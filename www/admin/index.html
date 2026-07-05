@@ -116,7 +116,10 @@
             <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-6 border-b border-gray-700 flex justify-between items-center">
                     <h2 class="text-xl font-bold">Danh sách Tài Khoản</h2>
-                    <button onclick="loadUsers()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg text-sm transition-colors border border-gray-600"><i class="fas fa-sync-alt mr-2"></i>Làm mới</button>
+                    <div>
+                        <button onclick="openCreateUserModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors border border-blue-500 mr-2"><i class="fas fa-plus mr-2"></i>Tạo TK Mới</button>
+                        <button onclick="loadUsers()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg text-sm transition-colors border border-gray-600"><i class="fas fa-sync-alt mr-2"></i>Làm mới</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -231,9 +234,15 @@
                 <div class="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-lg text-sm mb-4">
                     <i class="fas fa-exclamation-triangle mr-2"></i> Yêu cầu: Nhân vật phải ĐANG OFFLINE (Thoát game) trước khi buff đồ.
                 </div>
-                <div class="mb-4">
-                    <label class="block text-gray-400 text-sm font-bold mb-2">ID Vật Phẩm:</label>
-                    <input type="number" id="buffItemId" placeholder="Ví dụ: 2 (Kiếm gỗ)" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">
+                <div class="flex space-x-4 mb-4">
+                    <div class="flex-[2]">
+                        <label class="block text-gray-400 text-sm font-bold mb-2">ID Vật Phẩm:</label>
+                        <input type="number" id="buffItemId" placeholder="Ví dụ: 2 (Kiếm gỗ)" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-gray-400 text-sm font-bold mb-2">Cấp độ đồ (+):</label>
+                        <input type="number" id="buffItemUpgrade" value="0" min="0" max="16" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">
+                    </div>
                 </div>
                 <div class="flex space-x-4 mb-6">
                     <div class="flex-1">
@@ -251,6 +260,37 @@
                     <button onclick="closeModal('modalPlayer')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors">Hủy</button>
                     <button onclick="submitPlayerItem()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-purple-500/30">Thêm Đồ</button>
                 </div>
+                
+                <hr class="border-gray-700 my-6">
+                
+                <!-- Buff Level Section -->
+                <h4 class="font-bold text-gray-300 mb-2">Buff Cấp Độ Nhân Vật</h4>
+                <div class="flex space-x-4">
+                    <input type="number" id="buffPlayerLevel" placeholder="Cấp độ mới (vd: 130)" class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500">
+                    <button onclick="submitPlayerLevel()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg transition-colors shadow-lg shadow-purple-500/30">Set Level</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div id="modalCreateUser" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md transform scale-95 transition-transform" id="modalCreateUserContent">
+            <h3 class="text-2xl font-bold mb-6 text-white border-b border-gray-700 pb-4">Tạo Tài Khoản Mới</h3>
+            
+            <div class="mb-4">
+                <label class="block text-gray-400 text-sm font-bold mb-2">Tên đăng nhập:</label>
+                <input type="text" id="newUsername" placeholder="Nhập tài khoản" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-400 text-sm font-bold mb-2">Mật khẩu:</label>
+                <input type="password" id="newPassword" placeholder="Nhập mật khẩu" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div class="flex space-x-4">
+                <button onclick="closeModal('modalCreateUser')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors">Hủy</button>
+                <button onclick="submitCreateUser()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-green-500/30">Tạo Ngay</button>
             </div>
         </div>
     </div>
@@ -426,6 +466,17 @@
             }, 10);
         }
 
+        function openCreateUserModal() {
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            const modal = document.getElementById('modalCreateUser');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modalCreateUserContent').classList.remove('scale-95');
+            }, 10);
+        }
+
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
             const content = document.getElementById(modalId + 'Content');
@@ -473,10 +524,22 @@
             } catch(e) {}
         }
 
+        async function submitCreateUser() {
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            try {
+                const data = await apiCall('/users/create', 'POST', { username, password });
+                showToast('Thành công', data.message);
+                closeModal('modalCreateUser');
+                loadUsers();
+            } catch(e) {}
+        }
+
         async function submitPlayerItem() {
             const id = document.getElementById('buffPlayerId').value;
             const itemId = document.getElementById('buffItemId').value;
             const qty = parseInt(document.getElementById('buffItemQty').value) || 1;
+            const upgrade = parseInt(document.getElementById('buffItemUpgrade').value) || 0;
             const isLock = document.getElementById('buffItemLock').checked;
             
             if(!itemId) {
@@ -484,7 +547,19 @@
                 return;
             }
             try {
-                const data = await apiCall('/players/add-item', 'POST', { id, itemId, quantity: qty, isLock });
+                const data = await apiCall('/players/add-item', 'POST', { id, itemId, quantity: qty, isLock, upgrade });
+                showToast('Thành công', data.message);
+                closeModal('modalPlayer');
+                searchPlayers();
+            } catch(e) {}
+        }
+
+        async function submitPlayerLevel() {
+            const id = document.getElementById('buffPlayerId').value;
+            const level = document.getElementById('buffPlayerLevel').value;
+            if(!level) return showToast('Lỗi', 'Nhập cấp độ', 'red');
+            try {
+                const data = await apiCall('/players/set-level', 'POST', { id, level });
                 showToast('Thành công', data.message);
                 closeModal('modalPlayer');
                 searchPlayers();
