@@ -96,6 +96,23 @@ app.post('/api/users/create', checkAuth, async (req, res) => {
     }
 });
 
+// Cộng điểm nhân vật
+app.post('/api/players/add-points', checkAuth, async (req, res) => {
+    const { id, point, spoint } = req.body;
+    try {
+        const [playerRows] = await pool.query('SELECT point, spoint FROM players WHERE id = ?', [id]);
+        if (playerRows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
+        
+        let newPoint = Math.min(32767, (playerRows[0].point || 0) + (parseInt(point) || 0));
+        let newSpoint = Math.min(32767, (playerRows[0].spoint || 0) + (parseInt(spoint) || 0));
+        
+        await pool.query('UPDATE players SET point = ?, spoint = ? WHERE id = ?', [newPoint, newSpoint, id]);
+        res.json({ success: true, message: 'Cộng điểm thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ================= PLAYERS API =================
 
 // Quản lý Nhân Vật (có phân trang)
@@ -231,16 +248,7 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
     }
 });
 
-// Cộng điểm nhân vật
-app.post('/api/players/add-points', checkAuth, async (req, res) => {
-    const { id, point, spoint } = req.body;
-    try {
-        await pool.query('UPDATE players SET point = point + ?, spoint = spoint + ? WHERE id = ?', [parseInt(point) || 0, parseInt(spoint) || 0, id]);
-        res.json({ success: true, message: 'Cộng điểm thành công!' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+
 
 // Dashboard stats
 app.get('/api/stats', checkAuth, async (req, res) => {
