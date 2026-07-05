@@ -125,9 +125,10 @@
             <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-6 border-b border-gray-700 flex justify-between items-center">
                     <h2 class="text-xl font-bold">Danh sách Tài Khoản</h2>
-                    <div>
-                        <button onclick="openCreateUserModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors border border-blue-500 mr-2"><i class="fas fa-plus mr-2"></i>Tạo TK Mới</button>
-                        <button onclick="loadUsers()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg text-sm transition-colors border border-gray-600"><i class="fas fa-sync-alt mr-2"></i>Làm mới</button>
+                    <div class="flex space-x-2">
+                        <button onclick="unstuckUser('all')" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-sm transition-colors border border-yellow-500 text-white shadow-lg shadow-yellow-500/30" title="Nếu khởi động lại Server mà tài khoản không đăng nhập được (báo đang đăng nhập), hãy bấm nút này."><i class="fas fa-bolt mr-2"></i>Kích Kẹt Tất Cả</button>
+                        <button onclick="openCreateUserModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors border border-blue-500 text-white"><i class="fas fa-plus mr-2"></i>Tạo TK Mới</button>
+                        <button onclick="loadUsers()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg text-sm transition-colors border border-gray-600 text-white"><i class="fas fa-sync-alt mr-2"></i>Làm mới</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -172,7 +173,7 @@
                                 <th class="p-4 font-semibold">Tên Nhân Vật</th>
                                 <th class="p-4 font-semibold">Tài Khoản</th>
                                 <th class="p-4 font-semibold">Xu / Yên</th>
-                                <th class="p-4 font-semibold">Cấp độ</th>
+                                <th class="p-4 font-semibold">Cấp độ & Vị trí</th>
                                 <th class="p-4 font-semibold text-right">Thao tác</th>
                             </tr>
                         </thead>
@@ -591,8 +592,9 @@
                             <td class="p-4 text-yellow-400 font-semibold">${u.luong.toLocaleString()}</td>
                             <td class="p-4 text-gray-300 font-semibold">${u.coin.toLocaleString()}</td>
                             <td class="p-4">${statusBadge}</td>
-                            <td class="p-4 text-right">
-                                <button onclick="openBuffMoneyModal(${u.id}, '${u.username}')" class="text-blue-400 hover:text-blue-300 p-2"><i class="fas fa-coins"></i> Buff</button>
+                            <td class="p-4 text-right space-x-2">
+                                <button onclick="unstuckUser(${u.id})" class="text-yellow-400 hover:text-yellow-300 p-2 text-sm bg-yellow-500/10 rounded border border-yellow-500/20" title="Kích kẹt tài khoản"><i class="fas fa-bolt"></i></button>
+                                <button onclick="openBuffMoneyModal(${u.id}, '${u.username}')" class="text-blue-400 hover:text-blue-300 p-2 text-sm bg-blue-500/10 rounded border border-blue-500/20"><i class="fas fa-coins"></i> Buff</button>
                             </td>
                         </tr>
                     `;
@@ -613,6 +615,7 @@
                     return;
                 }
                 players.forEach(p => {
+                    let mapId = p.mapData && p.mapData[0] !== undefined ? p.mapData[0] : 'Không rõ';
                     tbody.innerHTML += `
                         <tr class="hover:bg-dark-700/50 transition-colors">
                             <td class="p-4">${p.id}</td>
@@ -622,7 +625,10 @@
                                 <div class="text-yellow-400 font-semibold text-sm">Xu: ${p.xu.toLocaleString()}</div>
                                 <div class="text-gray-300 font-semibold text-sm">Yên: ${p.yen.toLocaleString()}</div>
                             </td>
-                            <td class="p-4">Lv.${p.level} (Phái: ${p.class})</td>
+                            <td class="p-4">
+                                <div class="font-bold">Lv.${p.level} <span class="text-xs font-normal text-gray-400">(Phái: ${p.class})</span></div>
+                                <div class="text-xs text-green-400 mt-1"><i class="fas fa-map-marker-alt"></i> Map ID: ${mapId}</div>
+                            </td>
                             <td class="p-4 text-right">
                                 <button onclick="openPlayerModal(${p.id}, '${p.name}')" class="bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 border border-purple-500/30 px-3 py-1 rounded transition-colors"><i class="fas fa-magic mr-1"></i> Quản Lý</button>
                             </td>
@@ -916,6 +922,17 @@
                 const data = await apiCall(`/giftcodes/${id}`, 'DELETE');
                 showToast('Thành công', data.message);
                 loadGiftcodes();
+            } catch(e) {}
+        }
+
+        async function unstuckUser(id) {
+            const msg = id === 'all' 
+                ? 'CẢNH BÁO: Hành động này sẽ reset trạng thái online của TẤT CẢ TÀI KHOẢN trên Server (Chỉ dùng khi Server vừa khởi động lại). Bạn chắc chứ?' 
+                : 'Bạn có muốn Kích Kẹt tài khoản này không?';
+            if(!confirm(msg)) return;
+            try {
+                const data = await apiCall('/users/unstuck', 'POST', { id });
+                showToast('Thành công', data.message);
             } catch(e) {}
         }
 

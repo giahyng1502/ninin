@@ -54,12 +54,28 @@ app.post('/api/users/add-money', checkAuth, async (req, res) => {
     }
 });
 
-// Khoá / Mở khoá tài khoản
+// Toggle Lock User (1 = khoá, 0 = bình thường)
 app.post('/api/users/toggle-lock', checkAuth, async (req, res) => {
     const { id, status } = req.body;
     try {
         await pool.query('UPDATE users SET status = ? WHERE id = ?', [status, id]);
-        res.json({ success: true, message: 'Đã đổi trạng thái thành công!' });
+        res.json({ success: true, message: status === 1 ? 'Đã khoá tài khoản' : 'Đã mở khoá tài khoản' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Kích kẹt (Reset online status)
+app.post('/api/users/unstuck', checkAuth, async (req, res) => {
+    const { id } = req.body;
+    try {
+        if (id === 'all') {
+            await pool.query('UPDATE users SET online = 0');
+            return res.json({ success: true, message: 'Đã kích kẹt toàn bộ tài khoản trên Server!' });
+        } else {
+            await pool.query('UPDATE users SET online = 0 WHERE id = ?', [id]);
+            return res.json({ success: true, message: 'Đã kích kẹt tài khoản thành công!' });
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -82,34 +98,37 @@ app.post('/api/users/create', checkAuth, async (req, res) => {
 
 // ================= PLAYERS API =================
 
-// Tìm kiếm nhân vật
+// Quản lý Nhân Vật
 app.get('/api/players', checkAuth, async (req, res) => {
     const search = req.query.q || '';
     try {
-        const [rows] = await pool.query(`
-            SELECT p.id, p.name, p.xu, p.yen, p.level, p.class, u.username, p.bag
-            FROM players p 
-            JOIN users u ON p.user_id = u.id 
-            WHERE p.name LIKE ? 
-            ORDER BY p.id DESC LIMIT 50
-        `, [`%${search}%`]);
+        const query = search 
+            ? 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, u.username, JSON_EXTRACT(p.data, "$[0]") as level, JSON_EXTRACT(p.data, "$[3]") as class FROM players p JOIN users u ON p.user_id = u.id WHERE p.name LIKE ? LIMIT 50'
+            : 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, u.username, JSON_EXTRACT(p.data, "$[0]") as level, JSON_EXTRACT(p.data, "$[3]") as class FROM players p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC LIMIT 50';
         
-        // Không gửi toàn bộ túi đồ dạng chuỗi JSON về để tránh nặng băng thông, chỉ đếm số đồ
-        const results = rows.map(r => {
-            let bagItems = [];
-            try { bagItems = JSON.parse(r.bag); } catch(e) {}
+        const params = search ? [`%${search}%`] : [];
+        const [rows] = await pool.query(query, params);
+        
+        const players = rows.map(r => {
+            let bagCount = 0;
+            try { bagCount = JSON.parse(r.bag).length; } catch(e){}
+            
+            let mapData = '[0,0,0]';
+            try { mapData = JSON.parse(r.map); } catch(e){}
+            
             return {
                 id: r.id,
                 name: r.name,
+                username: r.username,
                 xu: r.xu,
                 yen: r.yen,
-                level: r.level,
-                class: r.class,
-                username: r.username,
-                bagCount: bagItems.length
-            };
+                level: r.level || 0,
+                class: r.class || 0,
+                bagCount,
+                mapData
+            }
         });
-        res.json(results);
+        res.json(players);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
