@@ -947,6 +947,7 @@
                 return '<span class="text-red-400">Lỗi JSON</span>';
             }
         }
+        window.giftcodesList = [];
         async function loadGiftcodes() {
             if (Object.keys(window.itemDict).length === 0) await loadItemDict();
             const tbody = document.getElementById('giftcodesTableBody');
@@ -954,12 +955,12 @@
             try {
                 const res = await apiCall('/giftcodes');
                 tbody.innerHTML = '';
+                window.giftcodesList = res.data;
                 if(res.data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Chưa có mã Giftcode nào</td></tr>';
                     return;
                 }
                 res.data.forEach(g => {
-                    const gStr = JSON.stringify(g).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                     tbody.innerHTML += `
                         <tr class="hover:bg-dark-700/50 transition-colors">
                             <td class="p-4 font-bold text-red-400">${g.code}</td>
@@ -968,7 +969,7 @@
                             <td class="p-4 text-gray-300">${g.yen.toLocaleString()}</td>
                             <td class="p-4">${formatGiftcodeItems(g.items)}</td>
                             <td class="p-4 text-right whitespace-nowrap">
-                                <button onclick="editGiftcode('${gStr}')" class="bg-blue-900/40 hover:bg-blue-900/80 text-blue-400 px-3 py-2 rounded transition-colors mr-2" title="Sửa"><i class="fas fa-edit"></i></button>
+                                <button onclick="editGiftcode(${g.id})" class="bg-blue-900/40 hover:bg-blue-900/80 text-blue-400 px-3 py-2 rounded transition-colors mr-2" title="Sửa"><i class="fas fa-edit"></i></button>
                                 <button onclick="deleteGiftcode(${g.id})" class="bg-red-900/40 hover:bg-red-900/80 text-red-400 px-3 py-2 rounded transition-colors" title="Xoá"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
@@ -993,8 +994,9 @@
             openModal('modalCreateGiftcode');
         }
 
-        function editGiftcode(gStr) {
-            const g = JSON.parse(gStr);
+        function editGiftcode(id) {
+            const g = window.giftcodesList.find(x => x.id === id);
+            if (!g) return;
             document.getElementById('editGcId').value = g.id;
             document.getElementById('newGcCode').value = g.code;
             document.getElementById('newGcCoin').value = g.coin;
