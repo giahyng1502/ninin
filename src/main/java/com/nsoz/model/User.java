@@ -297,11 +297,10 @@ public class User {
             synchronized (ServerManager.users) {
                 User u = ServerManager.findUserByUsername(this.username);
                 if (u != null && !u.isCleaned) {
-                    service.serverDialog("Tài khoản đã có người đăng nhập.");
+                    service.serverDialog("Tài khoản đang đăng nhập. Đã yêu cầu kích, vui lòng đăng nhập lại sau vài giây.");
                     if (u.session != null && u.session.getService() != null) {
                         u.session.getService().serverDialog("Có người đăng nhập vào tài khoản của bạn.");
                     }
-//                    NinjaUtils.setTimeout(() -> {
                     try {
                         if (!u.isCleaned) {
                             u.session.disconnect();
@@ -310,7 +309,6 @@ public class User {
                     } finally {
                         ServerManager.removeUser(u);
                     }
-//                    }, 1000);
                     return;
                 }
                 ServerManager.addUser(this);
@@ -318,9 +316,8 @@ public class User {
 
             boolean isOnline = ((int) map.get("online")) == 1;
             if (isOnline) {
-                service.serverDialog("Tài khoản đang có người đăng nhập kìa");
+                // Tài khoản bị kẹt online trong Database, tiến hành force out và cho đăng nhập luôn
                 forceOutOtherServer();
-                return;
             }
 
             setNinjaOnline();
