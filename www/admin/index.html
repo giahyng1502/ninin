@@ -385,11 +385,12 @@
                 
                 <hr class="border-gray-700 my-6">
                 
-                <!-- Buff Level Section -->
-                <h4 class="font-bold text-gray-300 mb-2">Buff Cấp Độ Nhân Vật</h4>
-                <div class="flex space-x-4">
-                    <input type="number" id="buffPlayerLevel" placeholder="Cấp độ mới (vd: 130)" class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500">
-                    <button onclick="submitPlayerLevel()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg transition-colors shadow-lg shadow-purple-500/30">Set Level</button>
+                <!-- Buff Points Section -->
+                <h4 class="font-bold text-gray-300 mb-2 mt-4">Cộng Điểm (Tiềm năng / Kỹ năng)</h4>
+                <div class="flex space-x-2">
+                    <input type="number" id="buffPlayerPoint" placeholder="Điểm tiềm năng (vd: 1000)" class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500">
+                    <input type="number" id="buffPlayerSPoint" placeholder="Điểm kỹ năng (vd: 10)" class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500">
+                    <button onclick="submitPlayerPoints()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg transition-colors shadow-lg shadow-purple-500/30 whitespace-nowrap">Cộng Điểm</button>
                 </div>
             </div>
         </div>
@@ -824,12 +825,13 @@
             } catch(e) {}
         }
 
-        async function submitPlayerLevel() {
+        async function submitPlayerPoints() {
             const id = document.getElementById('buffPlayerId').value;
-            const level = document.getElementById('buffPlayerLevel').value;
-            if(!level) return showToast('Lỗi', 'Nhập cấp độ', 'red');
+            const point = document.getElementById('buffPlayerPoint').value || 0;
+            const spoint = document.getElementById('buffPlayerSPoint').value || 0;
+            if(point == 0 && spoint == 0) return showToast('Lỗi', 'Nhập ít nhất 1 loại điểm để cộng', 'red');
             try {
-                const data = await apiCall('/players/set-level', 'POST', { id, level });
+                const data = await apiCall('/players/add-points', 'POST', { id, point, spoint });
                 showToast('Thành công', data.message);
                 closeModal('modalPlayer');
                 loadPlayers();

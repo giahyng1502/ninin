@@ -231,12 +231,12 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
     }
 });
 
-// Set cấp độ nhân vật
-app.post('/api/players/set-level', checkAuth, async (req, res) => {
-    const { id, level } = req.body;
+// Cộng điểm nhân vật
+app.post('/api/players/add-points', checkAuth, async (req, res) => {
+    const { id, point, spoint } = req.body;
     try {
-        await pool.query('UPDATE players SET level = ? WHERE id = ?', [parseInt(level) || 1, id]);
-        res.json({ success: true, message: 'Đã chỉnh cấp độ thành công!' });
+        await pool.query('UPDATE players SET point = point + ?, spoint = spoint + ? WHERE id = ?', [parseInt(point) || 0, parseInt(spoint) || 0, id]);
+        res.json({ success: true, message: 'Cộng điểm thành công!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
