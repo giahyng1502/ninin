@@ -199,7 +199,15 @@ app.post('/api/players/add-exp-level', checkAuth, async (req, res) => {
         const addLevel = parseInt(level) || 0;
         const addExp = parseInt(exp) || 0;
         
-        await pool.query('UPDATE players SET level = level + ?, exp = exp + ? WHERE id = ?', [addLevel, addExp, id]);
+        await pool.query(`
+            UPDATE players 
+            SET data = JSON_SET(
+                data, 
+                '$.level', IFNULL(JSON_EXTRACT(data, '$.level'), 0) + ?,
+                '$.exp', IFNULL(JSON_EXTRACT(data, '$.exp'), 0) + ?
+            ) 
+            WHERE id = ?`, 
+        [addLevel, addExp, id]);
         res.json({ success: true, message: 'Đã buff Level / Exp thành công! (Cần thoát game ra vào lại để cập nhật)' });
     } catch (err) {
         res.status(500).json({ error: err.message });
