@@ -157,15 +157,20 @@ app.post('/api/players/add-money', checkAuth, async (req, res) => {
     }
 });
 
-// Thêm vật phẩm vào túi đồ nhân vật (Yêu cầu nhân vật offline) bằng ID
+// Thêm vật phẩm vào túi đồ nhân vật bằng ID
 app.post('/api/players/add-item', checkAuth, async (req, res) => {
     const { id, itemId, quantity, isLock, upgrade } = req.body;
     try {
-        const [rows] = await pool.query('SELECT bag FROM players WHERE id = ?', [id]);
+        const [rows] = await pool.query('SELECT p.bag, u.online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
+        if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi tặng.' });
         
         let bag = [];
         try { bag = JSON.parse(rows[0].bag); } catch (e) { bag = []; }
+
+        let nextIndex = 0;
+        const usedIndexes = bag.map(item => item.index !== undefined ? item.index : -1);
+        while (usedIndexes.includes(nextIndex)) nextIndex++;
 
         const newItem = {
             id: parseInt(itemId),
@@ -173,6 +178,12 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
             isLock: isLock ? true : false,
             upgrade: parseInt(upgrade) || 0,
             sys: 0,
+            expire: -1,
+            new: true,
+            yen: 0,
+            created_at: Date.now(),
+            updated_at: Date.now(),
+            index: nextIndex,
             options: []
         };
         
@@ -188,12 +199,17 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
 app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
     const { playerName, itemId, quantity, isLock, upgrade } = req.body;
     try {
-        const [players] = await pool.query('SELECT id, bag FROM players WHERE name = ?', [playerName]);
+        const [players] = await pool.query('SELECT p.id, p.bag, u.online FROM players p JOIN users u ON p.user_id = u.id WHERE p.name = ?', [playerName]);
         if (players.length === 0) return res.status(404).json({ error: 'Không tìm thấy tên nhân vật này' });
+        if (players[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi tặng.' });
         
         const player = players[0];
         let bag = [];
         try { bag = JSON.parse(player.bag); } catch (e) { bag = []; }
+
+        let nextIndex = 0;
+        const usedIndexes = bag.map(item => item.index !== undefined ? item.index : -1);
+        while (usedIndexes.includes(nextIndex)) nextIndex++;
 
         const newItem = {
             id: parseInt(itemId),
@@ -201,6 +217,12 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
             isLock: isLock ? true : false,
             upgrade: parseInt(upgrade) || 0,
             sys: 0,
+            expire: -1,
+            new: true,
+            yen: 0,
+            created_at: Date.now(),
+            updated_at: Date.now(),
+            index: nextIndex,
             options: []
         };
         
