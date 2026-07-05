@@ -123,11 +123,10 @@ app.post('/api/players/add-money', checkAuth, async (req, res) => {
     }
 });
 
-// Thêm vật phẩm vào túi đồ nhân vật (Yêu cầu nhân vật offline)
+// Thêm vật phẩm vào túi đồ nhân vật (Yêu cầu nhân vật offline) bằng ID
 app.post('/api/players/add-item', checkAuth, async (req, res) => {
     const { id, itemId, quantity, isLock, upgrade } = req.body;
     try {
-        // Lấy túi đồ hiện tại
         const [rows] = await pool.query('SELECT bag FROM players WHERE id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
         
@@ -146,6 +145,34 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
         bag.push(newItem);
         await pool.query('UPDATE players SET bag = ? WHERE id = ?', [JSON.stringify(bag), id]);
         res.json({ success: true, message: 'Đã buff Item vào túi thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Thêm vật phẩm vào túi bằng Tên Nhân Vật (Dành cho tab Từ Điển)
+app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
+    const { playerName, itemId, quantity, isLock, upgrade } = req.body;
+    try {
+        const [players] = await pool.query('SELECT id, bag FROM players WHERE name = ?', [playerName]);
+        if (players.length === 0) return res.status(404).json({ error: 'Không tìm thấy tên nhân vật này' });
+        
+        const player = players[0];
+        let bag = [];
+        try { bag = JSON.parse(player.bag); } catch (e) { bag = []; }
+
+        const newItem = {
+            id: parseInt(itemId),
+            quantity: parseInt(quantity) || 1,
+            isLock: isLock ? true : false,
+            upgrade: parseInt(upgrade) || 0,
+            sys: 0,
+            options: []
+        };
+        
+        bag.push(newItem);
+        await pool.query('UPDATE players SET bag = ? WHERE id = ?', [JSON.stringify(bag), player.id]);
+        res.json({ success: true, message: `Đã tặng Item thành công cho ${playerName}!` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
