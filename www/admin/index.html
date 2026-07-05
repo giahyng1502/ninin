@@ -921,7 +921,32 @@
                 closeModal('modalGiftItem');
             } catch(e) {}
         }
+        window.itemDict = {};
+        
+        async function loadItemDict() {
+            try {
+                const dict = await apiCall('/items/dict');
+                window.itemDict = dict;
+            } catch(e) {}
+        }
 
+        function formatGiftcodeItems(itemsStr) {
+            if (!itemsStr || itemsStr === '[]' || itemsStr.trim() === '') return '<span class="text-gray-500 italic">Không có</span>';
+            try {
+                const items = JSON.parse(itemsStr);
+                return items.map(it => {
+                    const name = window.itemDict[it.id] || `Item_${it.id}`;
+                    const lock = it.isLock ? '<i class="fas fa-lock text-red-400 text-xs ml-1"></i>' : '';
+                    const upg = it.upgrade > 0 ? `<span class="text-yellow-400 ml-1">+${it.upgrade}</span>` : '';
+                    return `<span class="inline-block bg-dark-800 border border-gray-600 rounded px-2 py-1 text-sm mr-2 mb-2">
+                                <span class="text-purple-300 font-bold">${name}</span>
+                                <span class="text-gray-400 ml-1">x${it.quantity}</span>${upg}${lock}
+                            </span>`;
+                }).join('');
+            } catch(e) {
+                return '<span class="text-red-400">Lỗi JSON</span>';
+            }
+        }
         async function loadGiftcodes() {
             if (Object.keys(window.itemDict).length === 0) await loadItemDict();
             const tbody = document.getElementById('giftcodesTableBody');
@@ -1021,7 +1046,7 @@
             
             try {
                 if (id) {
-                    const data = await apiCall(\`/giftcodes/\${id}\`, 'PUT', { code, coin, gold, yen, type, items });
+                    const data = await apiCall(`/giftcodes/${id}`, 'PUT', { code, coin, gold, yen, type, items });
                     showToast('Thành công', data.message);
                 } else {
                     const data = await apiCall('/giftcodes', 'POST', { code, coin, gold, yen, type, items });
