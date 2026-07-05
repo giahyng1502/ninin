@@ -35,6 +35,21 @@ services:
       - mongodb
     restart: always
 
+  caddy:
+    image: caddy:2
+    container_name: caddy_proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./www:/srv
+      - caddy_data:/data
+      - caddy_config:/config
+
 volumes:
   mysql_data:
   mongo_data:
+  caddy_data:
+  caddy_config:

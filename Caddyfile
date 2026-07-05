@@ -1,0 +1,8 @@
+ninja.hungcy.dev {
+    root * /srv
+    file_server
+
+    # Nếu sau này bạn có Web Admin hoặc Web Client (Websocket), 
+    # hãy xóa dấu # ở 2 dòng dưới đây để bật reverse proxy:
+    # reverse_proxy game-server:14444
+}
