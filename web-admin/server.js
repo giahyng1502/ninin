@@ -174,6 +174,8 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
             isLock: isLock ? true : false,
             upgrade: parseInt(upgrade) || 0,
             sys: 0,
+            expire: -1,
+            yen: 0,
             options: []
         };
         const itemsStr = JSON.stringify([newItem]);
@@ -210,6 +212,8 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
             isLock: isLock ? true : false,
             upgrade: parseInt(upgrade) || 0,
             sys: 0,
+            expire: -1,
+            yen: 0,
             options: []
         };
         const itemsStr = JSON.stringify([newItem]);
