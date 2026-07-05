@@ -231,7 +231,7 @@
                 <div class="p-6 border-b border-gray-700 flex justify-between items-center">
                     <h2 class="text-xl font-bold">Danh sách Giftcode</h2>
                     <div>
-                        <button onclick="openCreateGiftcodeModal()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm transition-colors border border-red-500 mr-2"><i class="fas fa-plus mr-2"></i>Tạo Mã Mới</button>
+                        <button onclick="openCreateGiftcode()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm transition-colors border border-red-500 mr-2"><i class="fas fa-plus mr-2"></i>Tạo Mã Mới</button>
                         <button onclick="loadGiftcodes()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg text-sm transition-colors border border-gray-600"><i class="fas fa-sync-alt mr-2"></i>Làm mới</button>
                     </div>
                 </div>
@@ -422,6 +422,7 @@
         <div class="glass-panel p-8 rounded-2xl w-full max-w-lg transform scale-95 transition-transform" id="modalCreateGiftcodeContent">
             <h3 class="text-2xl font-bold mb-6 text-white border-b border-gray-700 pb-4">Tạo Giftcode Mới</h3>
             
+            <input type="hidden" id="editGcId" value="">
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div class="col-span-2">
                     <label class="block text-gray-400 text-sm font-bold mb-2">Mã Giftcode:</label>
@@ -446,15 +447,33 @@
                         <option value="1">Chỉ 1 lần duy nhất</option>
                     </select>
                 </div>
-                <div class="col-span-2">
-                    <label class="block text-gray-400 text-sm font-bold mb-2">Vật Phẩm (Cấu trúc mảng JSON):</label>
-                    <textarea id="newGcItems" rows="3" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-red-500" placeholder='[{"id": 2, "quantity": 1, "isLock": true, "sys": 0, "upgrade": 0, "options": []}]'></textarea>
+                
+                <div class="col-span-2 mt-2">
+                    <h4 class="font-bold text-gray-300 mb-3 border-b border-gray-700 pb-2">Vật Phẩm (Để trống ID nếu không tặng)</h4>
+                    <div class="flex space-x-2 mb-2">
+                        <div class="flex-[2]">
+                            <label class="block text-gray-400 text-xs mb-1">ID Vật phẩm</label>
+                            <input type="number" id="gcItemId" placeholder="Ví dụ: 94" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-gray-400 text-xs mb-1">Cấp (+)</label>
+                            <input type="number" id="gcItemUpgrade" value="0" min="0" max="16" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-gray-400 text-xs mb-1">Số lượng</label>
+                            <input type="number" id="gcItemQty" value="1" min="1" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500">
+                        </div>
+                    </div>
+                    <label class="flex items-center space-x-3 cursor-pointer mt-3">
+                        <input type="checkbox" id="gcItemLock" class="form-checkbox h-5 w-5 text-red-600 bg-dark-800 border-gray-600 rounded" checked>
+                        <span class="text-gray-300 font-semibold text-sm">Khóa vật phẩm</span>
+                    </label>
                 </div>
             </div>
             
             <div class="flex space-x-4 mt-6">
                 <button onclick="closeModal('modalCreateGiftcode')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors">Hủy</button>
-                <button onclick="submitCreateGiftcode()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-red-500/30">Tạo Mã</button>
+                <button onclick="submitCreateGiftcode()" id="btnSubmitGc" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-red-500/30">Lưu Giftcode</button>
             </div>
         </div>
     </div>
@@ -719,17 +738,12 @@
             }, 10);
         }
 
-        function openCreateGiftcodeModal() {
-            document.getElementById('newGcCode').value = '';
-            document.getElementById('newGcCoin').value = '0';
-            document.getElementById('newGcGold').value = '0';
-            document.getElementById('newGcYen').value = '0';
-            document.getElementById('newGcItems').value = '[]';
-            const modal = document.getElementById('modalCreateGiftcode');
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
             modal.classList.remove('hidden');
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
-                document.getElementById('modalCreateGiftcodeContent').classList.remove('scale-95');
+                document.getElementById(modalId + 'Content').classList.remove('scale-95');
             }, 10);
         }
 
@@ -907,6 +921,7 @@
         }
 
         async function loadGiftcodes() {
+            if (Object.keys(window.itemDict).length === 0) await loadItemDict();
             const tbody = document.getElementById('giftcodesTableBody');
             tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Đang tải...</td></tr>';
             try {
@@ -917,14 +932,16 @@
                     return;
                 }
                 res.data.forEach(g => {
+                    const gStr = JSON.stringify(g).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                     tbody.innerHTML += `
                         <tr class="hover:bg-dark-700/50 transition-colors">
                             <td class="p-4 font-bold text-red-400">${g.code}</td>
                             <td class="p-4 text-blue-400">${g.coin.toLocaleString()}</td>
                             <td class="p-4 text-yellow-400">${g.gold.toLocaleString()}</td>
                             <td class="p-4 text-gray-300">${g.yen.toLocaleString()}</td>
-                            <td class="p-4 font-mono text-xs text-gray-400 max-w-xs overflow-x-auto truncate" title='${g.items}'>${g.items}</td>
-                            <td class="p-4 text-right">
+                            <td class="p-4">${formatGiftcodeItems(g.items)}</td>
+                            <td class="p-4 text-right whitespace-nowrap">
+                                <button onclick="editGiftcode('${gStr}')" class="bg-blue-900/40 hover:bg-blue-900/80 text-blue-400 px-3 py-2 rounded transition-colors mr-2" title="Sửa"><i class="fas fa-edit"></i></button>
                                 <button onclick="deleteGiftcode(${g.id})" class="bg-red-900/40 hover:bg-red-900/80 text-red-400 px-3 py-2 rounded transition-colors" title="Xoá"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
@@ -933,24 +950,81 @@
             } catch(e) {}
         }
 
+        function openCreateGiftcode() {
+            document.getElementById('editGcId').value = '';
+            document.getElementById('newGcCode').value = '';
+            document.getElementById('newGcCoin').value = 0;
+            document.getElementById('newGcGold').value = 0;
+            document.getElementById('newGcYen').value = 0;
+            document.getElementById('newGcType').value = 0;
+            
+            document.getElementById('gcItemId').value = '';
+            document.getElementById('gcItemUpgrade').value = 0;
+            document.getElementById('gcItemQty').value = 1;
+            document.getElementById('gcItemLock').checked = true;
+            
+            openModal('modalCreateGiftcode');
+        }
+
+        function editGiftcode(gStr) {
+            const g = JSON.parse(gStr);
+            document.getElementById('editGcId').value = g.id;
+            document.getElementById('newGcCode').value = g.code;
+            document.getElementById('newGcCoin').value = g.coin;
+            document.getElementById('newGcGold').value = g.gold;
+            document.getElementById('newGcYen').value = g.yen;
+            document.getElementById('newGcType').value = g.type;
+            
+            document.getElementById('gcItemId').value = '';
+            document.getElementById('gcItemUpgrade').value = 0;
+            document.getElementById('gcItemQty').value = 1;
+            document.getElementById('gcItemLock').checked = true;
+            
+            try {
+                const items = JSON.parse(g.items);
+                if(items.length > 0) {
+                    document.getElementById('gcItemId').value = items[0].id;
+                    document.getElementById('gcItemUpgrade').value = items[0].upgrade || 0;
+                    document.getElementById('gcItemQty').value = items[0].quantity || 1;
+                    document.getElementById('gcItemLock').checked = items[0].isLock;
+                }
+            } catch(e) {}
+            
+            openModal('modalCreateGiftcode');
+        }
+
         async function submitCreateGiftcode() {
+            const id = document.getElementById('editGcId').value;
             const code = document.getElementById('newGcCode').value;
             const coin = document.getElementById('newGcCoin').value;
             const gold = document.getElementById('newGcGold').value;
             const yen = document.getElementById('newGcYen').value;
             const type = document.getElementById('newGcType').value;
+            
+            const itemId = document.getElementById('gcItemId').value;
             let items = [];
             
-            try {
-                const rawItems = document.getElementById('newGcItems').value;
-                if(rawItems && rawItems.trim() !== '') items = JSON.parse(rawItems);
-            } catch(e) {
-                return showToast('Lỗi', 'Items JSON không hợp lệ! Hãy để [] nếu không tặng đồ.', 'red');
+            if (itemId && itemId.trim() !== '') {
+                items.push({
+                    id: parseInt(itemId),
+                    quantity: parseInt(document.getElementById('gcItemQty').value) || 1,
+                    upgrade: parseInt(document.getElementById('gcItemUpgrade').value) || 0,
+                    isLock: document.getElementById('gcItemLock').checked,
+                    sys: 0,
+                    expire: -1,
+                    yen: 0,
+                    options: []
+                });
             }
             
             try {
-                const data = await apiCall('/giftcodes', 'POST', { code, coin, gold, yen, type, items });
-                showToast('Thành công', data.message);
+                if (id) {
+                    const data = await apiCall(\`/giftcodes/\${id}\`, 'PUT', { code, coin, gold, yen, type, items });
+                    showToast('Thành công', data.message);
+                } else {
+                    const data = await apiCall('/giftcodes', 'POST', { code, coin, gold, yen, type, items });
+                    showToast('Thành công', data.message);
+                }
                 closeModal('modalCreateGiftcode');
                 loadGiftcodes();
             } catch(e) {}

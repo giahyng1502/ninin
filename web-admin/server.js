@@ -284,6 +284,18 @@ app.get('/api/items', checkAuth, async (req, res) => {
     }
 });
 
+// Lấy từ điển Item (id -> name)
+app.get('/api/items/dict', checkAuth, async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT id, name FROM item');
+        const dict = {};
+        rows.forEach(r => dict[r.id] = r.name);
+        res.json(dict);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ================= GIFTCODE API =================
 
 // Lấy danh sách Giftcode
@@ -310,6 +322,26 @@ app.post('/api/giftcodes', checkAuth, async (req, res) => {
             [code, parseInt(coin) || 0, parseInt(gold) || 0, parseInt(yen) || 0, itemsJson, parseInt(type) || 0]
         );
         res.json({ success: true, message: 'Tạo Giftcode thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Sửa Giftcode
+app.put('/api/giftcodes/:id', checkAuth, async (req, res) => {
+    const { id } = req.params;
+    const { code, coin, gold, yen, items, type } = req.body;
+    if (!code) return res.status(400).json({ error: 'Mã Giftcode không được để trống' });
+    try {
+        const [existing] = await pool.query('SELECT id FROM gift_codes WHERE code = ? AND id != ?', [code, id]);
+        if (existing.length > 0) return res.status(400).json({ error: 'Mã Giftcode đã tồn tại ở mục khác' });
+
+        const itemsJson = items ? JSON.stringify(items) : '[]';
+        await pool.query(
+            'UPDATE gift_codes SET code=?, coin=?, gold=?, yen=?, items=?, type=?, updated_at=NOW() WHERE id=?',
+            [code, parseInt(coin) || 0, parseInt(gold) || 0, parseInt(yen) || 0, itemsJson, parseInt(type) || 0, id]
+        );
+        res.json({ success: true, message: 'Cập nhật Giftcode thành công!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
