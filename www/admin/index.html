@@ -760,8 +760,8 @@
                 document.getElementById('taskIdVal').value = p.taskId || 0;
                 let index = 0;
                 try {
-                    if (p.task && p.task !== 'null') {
-                        const taskObj = JSON.parse(p.task);
+                    if (p.taskStr && p.taskStr !== 'null') {
+                        const taskObj = JSON.parse(p.taskStr);
                         index = taskObj.index || 0;
                     }
                 } catch(e) {}
@@ -790,10 +790,17 @@
             const id = document.getElementById('taskIdPlayer').value;
             const taskId = document.getElementById('taskIdVal').value;
             const taskIndex = document.getElementById('taskIndexVal').value;
+            
+            // Build task string for the new update-task API
+            const taskStr = JSON.stringify({
+                id: parseInt(taskId) || 0,
+                index: parseInt(taskIndex) || 0,
+                count: 0
+            });
 
             try {
-                const res = await apiCall('/players/set-task', 'POST', { id, taskId, taskIndex, taskCount: 0 });
-                showToast('Thành công', 'Đã cập nhật nhiệm vụ');
+                const res = await apiCall('/players/update-task', 'POST', { id, taskId, taskStr });
+                showToast('Thành công', res.message || 'Đã cập nhật nhiệm vụ');
                 closeModal('modalTask');
                 loadPlayers();
             } catch(err) {

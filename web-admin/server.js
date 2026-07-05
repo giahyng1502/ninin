@@ -140,8 +140,8 @@ app.get('/api/players', checkAuth, async (req, res) => {
 
     try {
         const query = search 
-            ? 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, u.username, u.online, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id WHERE p.name LIKE ? ORDER BY p.id DESC LIMIT ? OFFSET ?'
-            : 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, u.username, u.online, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC LIMIT ? OFFSET ?';
+            ? 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, p.taskId, p.task, u.username, u.online, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id WHERE p.name LIKE ? ORDER BY p.id DESC LIMIT ? OFFSET ?'
+            : 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, p.taskId, p.task, u.username, u.online, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC LIMIT ? OFFSET ?';
         
         const countQuery = search 
             ? 'SELECT COUNT(*) as total FROM players WHERE name LIKE ?'
@@ -170,6 +170,8 @@ app.get('/api/players', checkAuth, async (req, res) => {
                 class: r.class || 0,
                 bagCount,
                 mapData,
+                taskId: r.taskId || 0,
+                taskStr: r.task || '[]',
                 online: r.online
             }
         });
@@ -199,6 +201,20 @@ app.post('/api/players/add-exp-level', checkAuth, async (req, res) => {
         
         await pool.query('UPDATE players SET level = level + ?, exp = exp + ? WHERE id = ?', [addLevel, addExp, id]);
         res.json({ success: true, message: 'Đã buff Level / Exp thành công! (Cần thoát game ra vào lại để cập nhật)' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Cập nhật nhiệm vụ cho nhân vật
+app.post('/api/players/update-task', checkAuth, async (req, res) => {
+    const { id, taskId, taskStr } = req.body;
+    try {
+        const tId = parseInt(taskId) || 0;
+        const tStr = typeof taskStr === 'string' && taskStr.trim() !== '' ? taskStr : '[]';
+        
+        await pool.query('UPDATE players SET taskId = ?, task = ? WHERE id = ?', [tId, tStr, id]);
+        res.json({ success: true, message: 'Đã cập nhật Nhiệm vụ thành công! (Cần thoát game ra vào lại để cập nhật)' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
