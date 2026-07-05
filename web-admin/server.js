@@ -190,6 +190,20 @@ app.post('/api/players/add-money', checkAuth, async (req, res) => {
     }
 });
 
+// Cộng thêm Level / Exp cho nhân vật
+app.post('/api/players/add-exp-level', checkAuth, async (req, res) => {
+    const { id, level, exp } = req.body;
+    try {
+        const addLevel = parseInt(level) || 0;
+        const addExp = parseInt(exp) || 0;
+        
+        await pool.query('UPDATE players SET level = level + ?, exp = exp + ? WHERE id = ?', [addLevel, addExp, id]);
+        res.json({ success: true, message: 'Đã buff Level / Exp thành công! (Cần thoát game ra vào lại để cập nhật)' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Thêm vật phẩm vào túi đồ nhân vật bằng ID (Tự động đúc chỉ số qua Giftcode)
 app.post('/api/players/add-item', checkAuth, async (req, res) => {
     const { id, itemId, quantity, isLock, upgrade } = req.body;
