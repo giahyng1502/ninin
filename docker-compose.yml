@@ -34,6 +34,8 @@ services:
       - mysql
       - mongodb
     restart: always
+    volumes:
+      - ./Data:/app/Data
 
   caddy:
     image: caddy:2

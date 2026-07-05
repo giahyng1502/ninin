@@ -11,8 +11,8 @@ RUN mvn clean package -DskipTests
 # Stage 2: Run the Java application
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-# Copy cac thu muc data, config, va database.sql
-COPY Data ./Data
+# Thư mục Data sẽ được mount trực tiếp từ bên ngoài vào qua docker-compose để tiết kiệm ổ cứng
+# COPY Data ./Data
 COPY config.properties .
 # Copy file .jar tu stage build
 COPY --from=build /app/target/Nso-jar-with-dependencies.jar ./app.jar
