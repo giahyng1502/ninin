@@ -154,17 +154,14 @@
 
         <!-- PLAYERS SECTION -->
         <section id="players" class="section-content">
-            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl mb-6 p-6">
-                <h2 class="text-xl font-bold mb-4">Tìm Kiếm Nhân Vật</h2>
-                <div class="flex space-x-4">
-                    <input type="text" id="playerSearch" placeholder="Nhập tên nhân vật..." class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors">
-                    <button onclick="searchPlayers()" class="px-6 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all shadow-lg shadow-purple-500/30">
-                        <i class="fas fa-search mr-2"></i>Tìm
-                    </button>
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl mb-6">
+                <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                    <h2 class="text-xl font-bold">Quản lý Nhân Vật</h2>
+                    <div class="flex space-x-2 w-1/2 justify-end">
+                        <input type="text" id="searchPlayer" placeholder="Tìm tên nhân vật..." class="w-2/3 bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" onkeyup="if(event.key === 'Enter') { playerPage = 1; loadPlayers(); }">
+                        <button onclick="playerPage = 1; loadPlayers()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm transition-colors"><i class="fas fa-search"></i></button>
+                    </div>
                 </div>
-            </div>
-
-            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -181,6 +178,14 @@
                             <tr><td colspan="6" class="p-8 text-center text-gray-500">Vui lòng tìm kiếm nhân vật</td></tr>
                         </tbody>
                     </table>
+                </div>
+                <!-- Pagination for Players -->
+                <div class="p-4 border-t border-gray-700 flex justify-between items-center bg-dark-800">
+                    <div class="text-gray-400 text-sm" id="playerPaginationInfo">Đang hiển thị trang 1</div>
+                    <div class="flex space-x-2">
+                        <button onclick="changePlayerPage(-1)" class="px-3 py-1 bg-dark-700 hover:bg-dark-600 rounded border border-gray-600 text-sm"><i class="fas fa-chevron-left"></i> Trước</button>
+                        <button onclick="changePlayerPage(1)" class="px-3 py-1 bg-dark-700 hover:bg-dark-600 rounded border border-gray-600 text-sm">Sau <i class="fas fa-chevron-right"></i></button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -501,6 +506,18 @@
     <script>
         const API_BASE = '/api'; // Caddy proxy sẽ chuyển /api vào web-admin:3000
         let currentToken = localStorage.getItem('nso_admin_token') || '';
+        let itemPage = 1;
+        let playerPage = 1;
+        let mapDict = {};
+
+        // Load Maps on init
+        async function loadMaps() {
+            try {
+                const res = await apiCall('/maps');
+                res.forEach(m => mapDict[m.id] = m.name);
+            } catch(e) {}
+        }
+        loadMaps();
 
         // Init
         if (currentToken) {
@@ -561,6 +578,7 @@
 
             if(id === 'users') loadUsers();
             if(id === 'dashboard') loadStats();
+            if(id === 'players') loadPlayers();
             if(id === 'items') searchItems();
             if(id === 'giftcodes') loadGiftcodes();
             if(id === 'settings') loadConfig();
@@ -603,19 +621,26 @@
         }
 
         // Players
-        async function searchPlayers() {
-            const q = document.getElementById('playerSearch').value;
+        async function loadPlayers() {
+            const search = document.getElementById('searchPlayer').value;
             const tbody = document.getElementById('playersTableBody');
-            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Đang tải...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</td></tr>';
             try {
-                const players = await apiCall(`/players?q=${encodeURIComponent(q)}`);
-                tbody.innerHTML = '';
-                if(players.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Không tìm thấy ai</td></tr>';
+                const res = await apiCall(`/players?q=${encodeURIComponent(search)}&page=${playerPage}`);
+                const players = res.data;
+                const total = res.total;
+                
+                if (players.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">Không tìm thấy nhân vật nào</td></tr>';
+                    document.getElementById('playerPaginationInfo').innerText = `Không có dữ liệu`;
                     return;
                 }
+                
+                tbody.innerHTML = '';
                 players.forEach(p => {
-                    let mapId = p.mapData && p.mapData[0] !== undefined ? p.mapData[0] : 'Không rõ';
+                    let mapId = p.mapData && p.mapData[0] !== undefined ? p.mapData[0] : -1;
+                    let mapName = mapDict[mapId] ? mapDict[mapId] : `Map ${mapId}`;
+                    
                     tbody.innerHTML += `
                         <tr class="hover:bg-dark-700/50 transition-colors">
                             <td class="p-4">${p.id}</td>
@@ -627,7 +652,7 @@
                             </td>
                             <td class="p-4">
                                 <div class="font-bold">Lv.${p.level} <span class="text-xs font-normal text-gray-400">(Phái: ${p.class})</span></div>
-                                <div class="text-xs text-green-400 mt-1"><i class="fas fa-map-marker-alt"></i> Map ID: ${mapId}</div>
+                                <div class="text-xs text-green-400 mt-1"><i class="fas fa-map-marker-alt mr-1"></i> ${mapName}</div>
                             </td>
                             <td class="p-4 text-right">
                                 <button onclick="openPlayerModal(${p.id}, '${p.name}')" class="bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 border border-purple-500/30 px-3 py-1 rounded transition-colors"><i class="fas fa-magic mr-1"></i> Quản Lý</button>
@@ -635,7 +660,17 @@
                         </tr>
                     `;
                 });
-            } catch(e) {}
+                
+                document.getElementById('playerPaginationInfo').innerText = `Trang ${playerPage} (Tổng: ${total} NV)`;
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-red-500">Lỗi khi tải dữ liệu</td></tr>';
+            }
+        }
+        
+        function changePlayerPage(delta) {
+            if (playerPage + delta < 1) return;
+            playerPage += delta;
+            loadPlayers();
         }
 
         // Modals
@@ -736,7 +771,7 @@
                 const data = await apiCall('/players/add-money', 'POST', { id, xu, yen });
                 showToast('Thành công', data.message);
                 closeModal('modalPlayer');
-                searchPlayers();
+                loadPlayers();
             } catch(e) {}
         }
 
@@ -766,7 +801,7 @@
                 const data = await apiCall('/players/add-item', 'POST', { id, itemId, quantity: qty, isLock, upgrade });
                 showToast('Thành công', data.message);
                 closeModal('modalPlayer');
-                searchPlayers();
+                loadPlayers();
             } catch(e) {}
         }
 
@@ -778,7 +813,7 @@
                 const data = await apiCall('/players/set-level', 'POST', { id, level });
                 showToast('Thành công', data.message);
                 closeModal('modalPlayer');
-                searchPlayers();
+                loadPlayers();
             } catch(e) {}
         }
 

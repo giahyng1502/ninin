@@ -98,16 +98,27 @@ app.post('/api/users/create', checkAuth, async (req, res) => {
 
 // ================= PLAYERS API =================
 
-// Quản lý Nhân Vật
+// Quản lý Nhân Vật (có phân trang)
 app.get('/api/players', checkAuth, async (req, res) => {
     const search = req.query.q || '';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = 50;
+    const offset = (page - 1) * limit;
+
     try {
         const query = search 
-            ? 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, u.username, JSON_EXTRACT(p.data, "$[0]") as level, JSON_EXTRACT(p.data, "$[3]") as class FROM players p JOIN users u ON p.user_id = u.id WHERE p.name LIKE ? LIMIT 50'
-            : 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, u.username, JSON_EXTRACT(p.data, "$[0]") as level, JSON_EXTRACT(p.data, "$[3]") as class FROM players p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC LIMIT 50';
+            ? 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, u.username, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id WHERE p.name LIKE ? ORDER BY p.id DESC LIMIT ? OFFSET ?'
+            : 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, u.username, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC LIMIT ? OFFSET ?';
         
-        const params = search ? [`%${search}%`] : [];
+        const countQuery = search 
+            ? 'SELECT COUNT(*) as total FROM players WHERE name LIKE ?'
+            : 'SELECT COUNT(*) as total FROM players';
+        
+        const params = search ? [`%${search}%`, limit, offset] : [limit, offset];
+        const countParams = search ? [`%${search}%`] : [];
+        
         const [rows] = await pool.query(query, params);
+        const [countResult] = await pool.query(countQuery, countParams);
         
         const players = rows.map(r => {
             let bagCount = 0;
@@ -128,7 +139,7 @@ app.get('/api/players', checkAuth, async (req, res) => {
                 mapData
             }
         });
-        res.json(players);
+        res.json({ data: players, total: countResult[0].total });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -222,6 +233,16 @@ app.get('/api/stats', checkAuth, async (req, res) => {
             players: playerCount[0].c,
             online: onlineCount[0].c
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ================= MAP DICTIONARY API =================
+app.get('/api/maps', checkAuth, async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT id, name FROM map');
+        res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
