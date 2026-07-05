@@ -50,6 +50,18 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
+  web-admin:
+    build: ./web-admin
+    container_name: nsokiss_web_admin
+    restart: always
+    environment:
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: nsotien_0
+    depends_on:
+      - mysql
+
 volumes:
   mysql_data:
   mongo_data:

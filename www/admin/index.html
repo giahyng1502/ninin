@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSO Web Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' },
+                        primary: { 500: '#3b82f6', 600: '#2563eb' }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .toast { transition: all 0.3s ease; transform: translateY(100%); opacity: 0; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        /* Hide all sections initially */
+        .section-content { display: none; }
+        .section-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row">
+
+    <!-- Auth Overlay -->
+    <div id="authOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-dark-900 bg-opacity-95 backdrop-blur-md">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl border-t-4 border-blue-500">
+            <h2 class="text-3xl font-bold mb-6 text-center text-white"><i class="fas fa-shield-alt text-blue-500 mr-2"></i>Admin Login</h2>
+            <input type="password" id="adminPassword" placeholder="Nhập Token Bí Mật" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 mb-4 text-white focus:outline-none focus:border-blue-500 transition-colors">
+            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-500/30">
+                Đăng Nhập
+            </button>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 glass-panel md:min-h-screen flex flex-col p-4 z-10 sticky top-0 md:fixed md:inset-y-0 shadow-xl border-r border-gray-800">
+        <div class="flex items-center justify-center mb-8 pt-4">
+            <div class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                <i class="fas fa-gamepad mr-2"></i>NSOKISS
+            </div>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="#" onclick="showSection('dashboard')" id="nav-dashboard" class="nav-btn flex items-center px-4 py-3 bg-blue-600 rounded-lg text-white transition-all shadow-md shadow-blue-500/20">
+                <i class="fas fa-chart-pie w-6"></i> Bảng Điều Khiển
+            </a>
+            <a href="#" onclick="showSection('users')" id="nav-users" class="nav-btn flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-all">
+                <i class="fas fa-users w-6"></i> Quản lý Tài Khoản
+            </a>
+            <a href="#" onclick="showSection('players')" id="nav-players" class="nav-btn flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-all">
+                <i class="fas fa-user-ninja w-6"></i> Quản lý Nhân Vật
+            </a>
+        </nav>
+        <div class="mt-auto text-center text-gray-500 text-sm">
+            Powered by Antigravity
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 md:ml-64 relative">
+        <!-- Top Bar -->
+        <header class="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl shadow-lg">
+            <h1 class="text-2xl font-bold" id="pageTitle">Bảng Điều Khiển</h1>
+            <div class="flex items-center space-x-4">
+                <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-semibold border border-green-500/30">
+                    <i class="fas fa-circle text-xs mr-1 animate-pulse"></i> Server Online
+                </span>
+                <button onclick="logout()" class="text-red-400 hover:text-red-300 transition-colors">
+                    <i class="fas fa-sign-out-alt"></i> Thoát
+                </button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD SECTION -->
+        <section id="dashboard" class="section-content active">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Stat Card 1 -->
+                <div class="glass-panel p-6 rounded-2xl border-l-4 border-blue-500 relative overflow-hidden group hover:border-l-8 transition-all">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-users text-8xl"></i></div>
+                    <p class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-1">Tổng Tài Khoản</p>
+                    <h3 class="text-4xl font-bold" id="stat-users">--</h3>
+                </div>
+                <!-- Stat Card 2 -->
+                <div class="glass-panel p-6 rounded-2xl border-l-4 border-purple-500 relative overflow-hidden group hover:border-l-8 transition-all">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-user-ninja text-8xl"></i></div>
+                    <p class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-1">Tổng Nhân Vật</p>
+                    <h3 class="text-4xl font-bold" id="stat-players">--</h3>
+                </div>
+                <!-- Stat Card 3 -->
+                <div class="glass-panel p-6 rounded-2xl border-l-4 border-green-500 relative overflow-hidden group hover:border-l-8 transition-all">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-wifi text-8xl"></i></div>
+                    <p class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-1">Đang Online</p>
+                    <h3 class="text-4xl font-bold text-green-400" id="stat-online">--</h3>
+                </div>
+            </div>
+            
+            <div class="glass-panel p-8 rounded-2xl text-center">
+                <i class="fas fa-rocket text-5xl text-blue-500 mb-4 animate-bounce"></i>
+                <h2 class="text-2xl font-bold mb-2">Chào mừng đến với Web Admin!</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">Sử dụng menu bên trái để quản lý người chơi. Tính năng buff đồ yêu cầu nhân vật phải ĐĂNG XUẤT khỏi game trước khi buff để tránh xung đột dữ liệu.</p>
+            </div>
+        </section>
+
+        <!-- USERS SECTION -->
+        <section id="users" class="section-content">
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                    <h2 class="text-xl font-bold">Danh sách Tài Khoản</h2>
+                    <button onclick="loadUsers()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg text-sm transition-colors border border-gray-600"><i class="fas fa-sync-alt mr-2"></i>Làm mới</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-dark-800 border-b border-gray-700 text-gray-400 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold">ID</th>
+                                <th class="p-4 font-semibold">Tài khoản</th>
+                                <th class="p-4 font-semibold">Lượng</th>
+                                <th class="p-4 font-semibold">Coin</th>
+                                <th class="p-4 font-semibold">Trạng thái</th>
+                                <th class="p-4 font-semibold text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y divide-gray-800">
+                            <!-- Data populated by JS -->
+                            <tr><td colspan="6" class="p-8 text-center text-gray-500">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- PLAYERS SECTION -->
+        <section id="players" class="section-content">
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl mb-6 p-6">
+                <h2 class="text-xl font-bold mb-4">Tìm Kiếm Nhân Vật</h2>
+                <div class="flex space-x-4">
+                    <input type="text" id="playerSearch" placeholder="Nhập tên nhân vật..." class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors">
+                    <button onclick="searchPlayers()" class="px-6 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all shadow-lg shadow-purple-500/30">
+                        <i class="fas fa-search mr-2"></i>Tìm
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-dark-800 border-b border-gray-700 text-gray-400 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold">ID</th>
+                                <th class="p-4 font-semibold">Tên Nhân Vật</th>
+                                <th class="p-4 font-semibold">Tài Khoản</th>
+                                <th class="p-4 font-semibold">Xu / Yên</th>
+                                <th class="p-4 font-semibold">Cấp độ</th>
+                                <th class="p-4 font-semibold text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playersTableBody" class="divide-y divide-gray-800">
+                            <tr><td colspan="6" class="p-8 text-center text-gray-500">Vui lòng tìm kiếm nhân vật</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Buff Money Modal (Users) -->
+    <div id="modalUserMoney" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md transform scale-95 transition-transform" id="modalUserMoneyContent">
+            <h3 class="text-2xl font-bold mb-6 text-white border-b border-gray-700 pb-4">Buff Lượng / Coin</h3>
+            <p class="text-gray-400 mb-4">Tài khoản: <span id="buffUserLabel" class="font-bold text-blue-400"></span></p>
+            <input type="hidden" id="buffUserId">
+            
+            <div class="mb-4">
+                <label class="block text-gray-400 text-sm font-bold mb-2">Cộng thêm Lượng:</label>
+                <input type="number" id="buffLuong" value="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-400 text-sm font-bold mb-2">Cộng thêm Coin:</label>
+                <input type="number" id="buffCoin" value="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div class="flex space-x-4">
+                <button onclick="closeModal('modalUserMoney')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors">Hủy</button>
+                <button onclick="submitUserMoney()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-500/30">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buff Player Modal (Money/Items) -->
+    <div id="modalPlayer" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-lg transform scale-95 transition-transform" id="modalPlayerContent">
+            <h3 class="text-2xl font-bold mb-6 text-white border-b border-gray-700 pb-4">Quản lý <span id="buffPlayerNameLabel" class="text-purple-400"></span></h3>
+            <input type="hidden" id="buffPlayerId">
+            
+            <!-- Tabs -->
+            <div class="flex mb-6 border-b border-gray-700">
+                <button onclick="switchPlayerTab('money')" id="tab-btn-money" class="flex-1 py-3 font-semibold border-b-2 border-purple-500 text-purple-400 transition-colors">Xu / Yên</button>
+                <button onclick="switchPlayerTab('item')" id="tab-btn-item" class="flex-1 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition-colors">Thêm Vật Phẩm</button>
+            </div>
+
+            <!-- Tab Money -->
+            <div id="tab-money" class="block">
+                <div class="mb-4">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Cộng thêm Xu:</label>
+                    <input type="number" id="buffXu" value="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Cộng thêm Yên:</label>
+                    <input type="number" id="buffYen" value="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="closeModal('modalPlayer')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors">Hủy</button>
+                    <button onclick="submitPlayerMoney()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-purple-500/30">Cộng Tiền</button>
+                </div>
+            </div>
+
+            <!-- Tab Item -->
+            <div id="tab-item" class="hidden">
+                <div class="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-lg text-sm mb-4">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> Yêu cầu: Nhân vật phải ĐANG OFFLINE (Thoát game) trước khi buff đồ.
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">ID Vật Phẩm:</label>
+                    <input type="number" id="buffItemId" placeholder="Ví dụ: 2 (Kiếm gỗ)" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <div class="flex space-x-4 mb-6">
+                    <div class="flex-1">
+                        <label class="block text-gray-400 text-sm font-bold mb-2">Số lượng:</label>
+                        <input type="number" id="buffItemQty" value="1" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-end pb-3">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="buffItemLock" class="form-checkbox h-5 w-5 text-purple-600 bg-dark-800 border-gray-600 rounded">
+                            <span class="text-gray-300 font-semibold">Khoá đồ</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="closeModal('modalPlayer')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors">Hủy</button>
+                    <button onclick="submitPlayerItem()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-purple-500/30">Thêm Đồ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast fixed bottom-6 right-6 glass-panel border-l-4 border-green-500 p-4 rounded-xl shadow-2xl flex items-center z-50">
+        <div class="bg-green-500/20 p-2 rounded-full mr-3"><i class="fas fa-check text-green-500"></i></div>
+        <div>
+            <h4 class="font-bold text-white text-sm" id="toastTitle">Thành công</h4>
+            <p class="text-gray-400 text-xs" id="toastMsg">Thao tác đã được thực hiện.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api'; // Caddy proxy sẽ chuyển /api vào web-admin:3000
+        let currentToken = localStorage.getItem('nso_admin_token') || '';
+
+        // Init
+        if (currentToken) {
+            document.getElementById('authOverlay').style.display = 'none';
+            loadStats();
+        }
+
+        function login() {
+            const tk = document.getElementById('adminPassword').value;
+            if(!tk) return;
+            currentToken = tk;
+            localStorage.setItem('nso_admin_token', tk);
+            document.getElementById('authOverlay').style.display = 'none';
+            loadStats();
+        }
+
+        function logout() {
+            localStorage.removeItem('nso_admin_token');
+            currentToken = '';
+            document.getElementById('authOverlay').style.display = 'flex';
+        }
+
+        // Fetch wrapper
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const headers = { 'Authorization': `Bearer ${currentToken}` };
+            if(body) headers['Content-Type'] = 'application/json';
+            const opts = { method, headers };
+            if(body) opts.body = JSON.stringify(body);
+            
+            try {
+                const res = await fetch(`${API_BASE}${endpoint}`, opts);
+                const data = await res.json();
+                if(res.status === 401) { logout(); throw new Error("Sai mật khẩu Admin!"); }
+                if(!res.ok) throw new Error(data.error || 'Lỗi server');
+                return data;
+            } catch (err) {
+                showToast('Lỗi', err.message, 'red');
+                throw err;
+            }
+        }
+
+        // Navigation
+        function showSection(id) {
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            // Update active nav button styles
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
+                el.classList.add('text-gray-400');
+            });
+            const activeBtn = document.getElementById(`nav-${id}`);
+            activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
+            activeBtn.classList.remove('text-gray-400');
+
+            const titles = { dashboard: 'Bảng Điều Khiển', users: 'Quản lý Tài Khoản', players: 'Quản lý Nhân Vật' };
+            document.getElementById('pageTitle').innerText = titles[id];
+
+            if(id === 'users') loadUsers();
+            if(id === 'dashboard') loadStats();
+        }
+
+        // Stats
+        async function loadStats() {
+            try {
+                const data = await apiCall('/stats');
+                document.getElementById('stat-users').innerText = data.users;
+                document.getElementById('stat-players').innerText = data.players;
+                document.getElementById('stat-online').innerText = data.online;
+            } catch(e) {}
+        }
+
+        // Users
+        async function loadUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Đang tải...</td></tr>';
+            try {
+                const users = await apiCall('/users');
+                tbody.innerHTML = '';
+                users.forEach(u => {
+                    const statusBadge = u.status === 1 ? '<span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs border border-red-500/30">Bị Khoá</span>' : '<span class="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs border border-green-500/30">Bình thường</span>';
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-dark-700/50 transition-colors">
+                            <td class="p-4">${u.id}</td>
+                            <td class="p-4 font-bold text-blue-400">${u.username}</td>
+                            <td class="p-4 text-yellow-400 font-semibold">${u.luong.toLocaleString()}</td>
+                            <td class="p-4 text-gray-300 font-semibold">${u.coin.toLocaleString()}</td>
+                            <td class="p-4">${statusBadge}</td>
+                            <td class="p-4 text-right">
+                                <button onclick="openBuffMoneyModal(${u.id}, '${u.username}')" class="text-blue-400 hover:text-blue-300 p-2"><i class="fas fa-coins"></i> Buff</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) {}
+        }
+
+        // Players
+        async function searchPlayers() {
+            const q = document.getElementById('playerSearch').value;
+            const tbody = document.getElementById('playersTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Đang tải...</td></tr>';
+            try {
+                const players = await apiCall(`/players?q=${encodeURIComponent(q)}`);
+                tbody.innerHTML = '';
+                if(players.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Không tìm thấy ai</td></tr>';
+                    return;
+                }
+                players.forEach(p => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-dark-700/50 transition-colors">
+                            <td class="p-4">${p.id}</td>
+                            <td class="p-4 font-bold text-purple-400">${p.name} <span class="text-xs text-gray-500 font-normal ml-2">(Túi: ${p.bagCount} món)</span></td>
+                            <td class="p-4 text-gray-400">${p.username}</td>
+                            <td class="p-4">
+                                <div class="text-yellow-400 font-semibold text-sm">Xu: ${p.xu.toLocaleString()}</div>
+                                <div class="text-gray-300 font-semibold text-sm">Yên: ${p.yen.toLocaleString()}</div>
+                            </td>
+                            <td class="p-4">Lv.${p.level} (Phái: ${p.class})</td>
+                            <td class="p-4 text-right">
+                                <button onclick="openPlayerModal(${p.id}, '${p.name}')" class="bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 border border-purple-500/30 px-3 py-1 rounded transition-colors"><i class="fas fa-magic mr-1"></i> Quản Lý</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) {}
+        }
+
+        // Modals
+        function openBuffMoneyModal(id, username) {
+            document.getElementById('buffUserId').value = id;
+            document.getElementById('buffUserLabel').innerText = username;
+            document.getElementById('buffLuong').value = 0;
+            document.getElementById('buffCoin').value = 0;
+            const modal = document.getElementById('modalUserMoney');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modalUserMoneyContent').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function openPlayerModal(id, name) {
+            document.getElementById('buffPlayerId').value = id;
+            document.getElementById('buffPlayerNameLabel').innerText = name;
+            document.getElementById('buffXu').value = 0;
+            document.getElementById('buffYen').value = 0;
+            document.getElementById('buffItemId').value = '';
+            document.getElementById('buffItemQty').value = 1;
+            switchPlayerTab('money');
+            const modal = document.getElementById('modalPlayer');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modalPlayerContent').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(modalId + 'Content');
+            modal.classList.add('opacity-0');
+            if(content) content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function switchPlayerTab(tab) {
+            if(tab === 'money') {
+                document.getElementById('tab-money').classList.remove('hidden');
+                document.getElementById('tab-item').classList.add('hidden');
+                document.getElementById('tab-btn-money').className = 'flex-1 py-3 font-semibold border-b-2 border-purple-500 text-purple-400 transition-colors';
+                document.getElementById('tab-btn-item').className = 'flex-1 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition-colors';
+            } else {
+                document.getElementById('tab-money').classList.add('hidden');
+                document.getElementById('tab-item').classList.remove('hidden');
+                document.getElementById('tab-btn-item').className = 'flex-1 py-3 font-semibold border-b-2 border-purple-500 text-purple-400 transition-colors';
+                document.getElementById('tab-btn-money').className = 'flex-1 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition-colors';
+            }
+        }
+
+        // Submits
+        async function submitUserMoney() {
+            const id = document.getElementById('buffUserId').value;
+            const luong = parseInt(document.getElementById('buffLuong').value) || 0;
+            const coin = parseInt(document.getElementById('buffCoin').value) || 0;
+            try {
+                const data = await apiCall('/users/add-money', 'POST', { id, luong, coin });
+                showToast('Thành công', data.message);
+                closeModal('modalUserMoney');
+                loadUsers();
+            } catch(e) {}
+        }
+
+        async function submitPlayerMoney() {
+            const id = document.getElementById('buffPlayerId').value;
+            const xu = parseInt(document.getElementById('buffXu').value) || 0;
+            const yen = parseInt(document.getElementById('buffYen').value) || 0;
+            try {
+                const data = await apiCall('/players/add-money', 'POST', { id, xu, yen });
+                showToast('Thành công', data.message);
+                closeModal('modalPlayer');
+                searchPlayers();
+            } catch(e) {}
+        }
+
+        async function submitPlayerItem() {
+            const id = document.getElementById('buffPlayerId').value;
+            const itemId = document.getElementById('buffItemId').value;
+            const qty = parseInt(document.getElementById('buffItemQty').value) || 1;
+            const isLock = document.getElementById('buffItemLock').checked;
+            
+            if(!itemId) {
+                showToast('Lỗi', 'Vui lòng nhập ID vật phẩm', 'red');
+                return;
+            }
+            try {
+                const data = await apiCall('/players/add-item', 'POST', { id, itemId, quantity: qty, isLock });
+                showToast('Thành công', data.message);
+                closeModal('modalPlayer');
+                searchPlayers();
+            } catch(e) {}
+        }
+
+        function showToast(title, msg, color = 'green') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastMsg').innerText = msg;
+            
+            toast.className = `toast fixed bottom-6 right-6 glass-panel border-l-4 border-${color}-500 p-4 rounded-xl shadow-2xl flex items-center z-50`;
+            toast.children[0].className = `bg-${color}-500/20 p-2 rounded-full mr-3`;
+            toast.children[0].innerHTML = `<i class="fas fa-${color==='green'?'check':'times'} text-${color}-500"></i>`;
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

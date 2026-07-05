@@ -1,5 +1,6 @@
 ninja.hungcy.dev {
     root * /srv
+    reverse_proxy /api/* web-admin:3000
     file_server
 
     # Nếu sau này bạn có Web Admin hoặc Web Client (Websocket), 
