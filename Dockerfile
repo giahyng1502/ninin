@@ -18,4 +18,4 @@ COPY config.properties .
 COPY --from=build /app/target/Nso-jar-with-dependencies.jar ./app.jar
 
 EXPOSE 14444
-CMD ["java", "-server", "-jar", "-Dfile.encoding=UTF-8", "-Xms2G", "-Xmx2G", "app.jar"]
+CMD ["java", "-server", "-jar", "-Dfile.encoding=UTF-8", "-Xms512M", "-Xmx1024M", "app.jar"]
