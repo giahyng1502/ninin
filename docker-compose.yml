@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mariadb:10.11
+    container_name: nsokiss_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: nsokiss
+    command: --sql-mode=""
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+
+  mongodb:
+    image: mongo:4.4
+    container_name: nsokiss_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  game-server:
+    build: .
+    container_name: nsokiss_game_server
+    ports:
+      - "14444:14444"
+    depends_on:
+      - mysql
+      - mongodb
+    restart: always
+
+volumes:
+  mysql_data:
+  mongo_data:

@@ -1,0 +1,12 @@
+/logs
+/target
+*.DS_Store
+*.DS_Store?
+/build
+/.vscode
+/target
+/nbactions.xml
+/nb-configuration.xml
+/.project
+/.classpath
+*.class
