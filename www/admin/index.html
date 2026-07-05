@@ -60,6 +60,12 @@
             <a href="#" onclick="showSection('players')" id="nav-players" class="nav-btn flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-all">
                 <i class="fas fa-user-ninja w-6"></i> Quản lý Nhân Vật
             </a>
+            <a href="#" onclick="showSection('items')" id="nav-items" class="nav-btn flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-all">
+                <i class="fas fa-book w-6 text-yellow-400"></i> Từ Điển ID
+            </a>
+            <a href="#" onclick="showSection('giftcodes')" id="nav-giftcodes" class="nav-btn flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-all">
+                <i class="fas fa-gift w-6 text-red-400"></i> Quản lý Giftcode
+            </a>
         </nav>
         <div class="mt-auto text-center text-gray-500 text-sm">
             Powered by Antigravity
@@ -169,6 +175,66 @@
                         </thead>
                         <tbody id="playersTableBody" class="divide-y divide-gray-800">
                             <tr><td colspan="6" class="p-8 text-center text-gray-500">Vui lòng tìm kiếm nhân vật</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ITEMS SECTION -->
+        <section id="items" class="section-content">
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl mb-6 p-6">
+                <h2 class="text-xl font-bold mb-4">Từ Điển Vật Phẩm</h2>
+                <div class="flex space-x-4">
+                    <input type="text" id="searchItemInput" onkeyup="if(event.key==='Enter') searchItems()" placeholder="Nhập tên vật phẩm..." class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-500 transition-colors">
+                    <button onclick="searchItems()" class="px-6 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-lg transition-all shadow-lg shadow-yellow-500/30">
+                        <i class="fas fa-search mr-2"></i>Tìm
+                    </button>
+                </div>
+            </div>
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto max-h-[600px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-dark-800 border-b border-gray-700 text-gray-400 text-sm uppercase tracking-wider sticky top-0">
+                                <th class="p-4 font-semibold">ID</th>
+                                <th class="p-4 font-semibold">Tên Vật Phẩm</th>
+                                <th class="p-4 font-semibold">Cấp Độ</th>
+                                <th class="p-4 font-semibold w-1/2">Mô Tả</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsTableBody" class="divide-y divide-gray-800">
+                            <tr><td colspan="4" class="p-8 text-center text-gray-500">Tìm kiếm tên đồ bạn muốn</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- GIFTCODES SECTION -->
+        <section id="giftcodes" class="section-content">
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                    <h2 class="text-xl font-bold">Danh sách Giftcode</h2>
+                    <div>
+                        <button onclick="openCreateGiftcodeModal()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm transition-colors border border-red-500 mr-2"><i class="fas fa-plus mr-2"></i>Tạo Mã Mới</button>
+                        <button onclick="loadGiftcodes()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg text-sm transition-colors border border-gray-600"><i class="fas fa-sync-alt mr-2"></i>Làm mới</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-dark-800 border-b border-gray-700 text-gray-400 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold">Mã Code</th>
+                                <th class="p-4 font-semibold">Coin</th>
+                                <th class="p-4 font-semibold">Xu</th>
+                                <th class="p-4 font-semibold">Yên</th>
+                                <th class="p-4 font-semibold">Items</th>
+                                <th class="p-4 font-semibold text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="giftcodesTableBody" class="divide-y divide-gray-800">
+                            <!-- Data -->
                         </tbody>
                     </table>
                 </div>
@@ -295,6 +361,48 @@
         </div>
     </div>
 
+    <!-- Create Giftcode Modal -->
+    <div id="modalCreateGiftcode" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-lg transform scale-95 transition-transform" id="modalCreateGiftcodeContent">
+            <h3 class="text-2xl font-bold mb-6 text-white border-b border-gray-700 pb-4">Tạo Giftcode Mới</h3>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="col-span-2">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Mã Giftcode:</label>
+                    <input type="text" id="newGcCode" placeholder="Ví dụ: TANTHU" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Lượng (Coin):</label>
+                    <input type="number" id="newGcCoin" value="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Xu (Gold):</label>
+                    <input type="number" id="newGcGold" value="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Yên:</label>
+                    <input type="number" id="newGcYen" value="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Phân loại:</label>
+                    <select id="newGcType" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500">
+                        <option value="0">Dùng nhiều lần</option>
+                        <option value="1">Chỉ 1 lần duy nhất</option>
+                    </select>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Vật Phẩm (Cấu trúc mảng JSON):</label>
+                    <textarea id="newGcItems" rows="3" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-red-500" placeholder='[{"id": 2, "quantity": 1, "isLock": true, "sys": 0, "upgrade": 0, "options": []}]'></textarea>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4 mt-6">
+                <button onclick="closeModal('modalCreateGiftcode')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors">Hủy</button>
+                <button onclick="submitCreateGiftcode()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-red-500/30">Tạo Mã</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast fixed bottom-6 right-6 glass-panel border-l-4 border-green-500 p-4 rounded-xl shadow-2xl flex items-center z-50">
         <div class="bg-green-500/20 p-2 rounded-full mr-3"><i class="fas fa-check text-green-500"></i></div>
@@ -362,11 +470,12 @@
             activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
             activeBtn.classList.remove('text-gray-400');
 
-            const titles = { dashboard: 'Bảng Điều Khiển', users: 'Quản lý Tài Khoản', players: 'Quản lý Nhân Vật' };
+            const titles = { dashboard: 'Bảng Điều Khiển', users: 'Quản lý Tài Khoản', players: 'Quản lý Nhân Vật', items: 'Từ Điển ID Vật Phẩm', giftcodes: 'Quản Lý Giftcode' };
             document.getElementById('pageTitle').innerText = titles[id];
 
             if(id === 'users') loadUsers();
             if(id === 'dashboard') loadStats();
+            if(id === 'giftcodes') loadGiftcodes();
         }
 
         // Stats
@@ -477,6 +586,20 @@
             }, 10);
         }
 
+        function openCreateGiftcodeModal() {
+            document.getElementById('newGcCode').value = '';
+            document.getElementById('newGcCoin').value = '0';
+            document.getElementById('newGcGold').value = '0';
+            document.getElementById('newGcYen').value = '0';
+            document.getElementById('newGcItems').value = '[]';
+            const modal = document.getElementById('modalCreateGiftcode');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modalCreateGiftcodeContent').classList.remove('scale-95');
+            }, 10);
+        }
+
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
             const content = document.getElementById(modalId + 'Content');
@@ -577,6 +700,97 @@
             
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // --- Items & Giftcodes APIs ---
+
+        async function searchItems() {
+            const search = document.getElementById('searchItemInput').value;
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Đang tải...</td></tr>';
+            try {
+                const res = await apiCall(`/items?search=${encodeURIComponent(search)}`);
+                tbody.innerHTML = '';
+                if(res.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Không tìm thấy vật phẩm</td></tr>';
+                    return;
+                }
+                res.data.forEach(i => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-dark-700/50 transition-colors group cursor-pointer" onclick="copyToClipboard('${i.id}')">
+                            <td class="p-4 font-mono font-bold text-yellow-400" title="Nhấn để copy ID">${i.id} <i class="fas fa-copy opacity-0 group-hover:opacity-100 text-xs ml-1 transition-opacity"></i></td>
+                            <td class="p-4 font-semibold text-white">${i.name}</td>
+                            <td class="p-4 text-gray-400">Lv.${i.level}</td>
+                            <td class="p-4 text-gray-400 text-sm break-words">${i.description}</td>
+                        </tr>
+                    `;
+                });
+            } catch(e) {}
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Thành công', 'Đã copy ID: ' + text);
+            });
+        }
+
+        async function loadGiftcodes() {
+            const tbody = document.getElementById('giftcodesTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Đang tải...</td></tr>';
+            try {
+                const res = await apiCall('/giftcodes');
+                tbody.innerHTML = '';
+                if(res.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Chưa có mã Giftcode nào</td></tr>';
+                    return;
+                }
+                res.data.forEach(g => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-dark-700/50 transition-colors">
+                            <td class="p-4 font-bold text-red-400">${g.code}</td>
+                            <td class="p-4 text-blue-400">${g.coin.toLocaleString()}</td>
+                            <td class="p-4 text-yellow-400">${g.gold.toLocaleString()}</td>
+                            <td class="p-4 text-gray-300">${g.yen.toLocaleString()}</td>
+                            <td class="p-4 font-mono text-xs text-gray-400 max-w-xs overflow-x-auto truncate" title='${g.items}'>${g.items}</td>
+                            <td class="p-4 text-right">
+                                <button onclick="deleteGiftcode(${g.id})" class="bg-red-900/40 hover:bg-red-900/80 text-red-400 px-3 py-2 rounded transition-colors" title="Xoá"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) {}
+        }
+
+        async function submitCreateGiftcode() {
+            const code = document.getElementById('newGcCode').value;
+            const coin = document.getElementById('newGcCoin').value;
+            const gold = document.getElementById('newGcGold').value;
+            const yen = document.getElementById('newGcYen').value;
+            const type = document.getElementById('newGcType').value;
+            let items = [];
+            
+            try {
+                const rawItems = document.getElementById('newGcItems').value;
+                if(rawItems && rawItems.trim() !== '') items = JSON.parse(rawItems);
+            } catch(e) {
+                return showToast('Lỗi', 'Items JSON không hợp lệ! Hãy để [] nếu không tặng đồ.', 'red');
+            }
+            
+            try {
+                const data = await apiCall('/giftcodes', 'POST', { code, coin, gold, yen, type, items });
+                showToast('Thành công', data.message);
+                closeModal('modalCreateGiftcode');
+                loadGiftcodes();
+            } catch(e) {}
+        }
+
+        async function deleteGiftcode(id) {
+            if(!confirm('Bạn có chắc chắn muốn xóa Giftcode này không?')) return;
+            try {
+                const data = await apiCall(`/giftcodes/${id}`, 'DELETE');
+                showToast('Thành công', data.message);
+                loadGiftcodes();
+            } catch(e) {}
         }
     </script>
 </body>

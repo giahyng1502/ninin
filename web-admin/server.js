@@ -178,6 +178,63 @@ app.get('/api/stats', checkAuth, async (req, res) => {
     }
 });
 
+// ================= ITEM DICTIONARY API =================
+
+// Lấy danh sách Item
+app.get('/api/items', checkAuth, async (req, res) => {
+    const { search = '', page = 1, limit = 50 } = req.query;
+    const offset = (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
+    try {
+        let query = 'SELECT id, name, description, level FROM item WHERE name LIKE ? ORDER BY id ASC LIMIT ? OFFSET ?';
+        const [rows] = await pool.query(query, [`%${search}%`, parseInt(limit), offset]);
+        const [total] = await pool.query('SELECT COUNT(*) as count FROM item WHERE name LIKE ?', [`%${search}%`]);
+        res.json({ data: rows, total: total[0].count });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ================= GIFTCODE API =================
+
+// Lấy danh sách Giftcode
+app.get('/api/giftcodes', checkAuth, async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM gift_codes ORDER BY id DESC');
+        res.json({ data: rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Tạo mới Giftcode
+app.post('/api/giftcodes', checkAuth, async (req, res) => {
+    const { code, coin, gold, yen, items, type } = req.body;
+    if (!code) return res.status(400).json({ error: 'Mã Giftcode không được để trống' });
+    try {
+        const [existing] = await pool.query('SELECT id FROM gift_codes WHERE code = ?', [code]);
+        if (existing.length > 0) return res.status(400).json({ error: 'Mã Giftcode đã tồn tại' });
+
+        const itemsJson = items ? JSON.stringify(items) : '[]';
+        await pool.query(
+            'INSERT INTO gift_codes (code, coin, gold, yen, items, type, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())',
+            [code, parseInt(coin) || 0, parseInt(gold) || 0, parseInt(yen) || 0, itemsJson, parseInt(type) || 0]
+        );
+        res.json({ success: true, message: 'Tạo Giftcode thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Xóa Giftcode
+app.delete('/api/giftcodes/:id', checkAuth, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM gift_codes WHERE id = ?', [req.params.id]);
+        res.json({ success: true, message: 'Đã xóa Giftcode!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(3000, () => {
     console.log('Web Admin API Server running on port 3000');
 });
