@@ -18181,6 +18181,9 @@ public class Char {
             if (taskMain.index > counts.length - 1) {
                 taskMain.index = counts.length - 1;
             }
+            if (taskId == TaskName.NV_BAN_HUU_TAM_GIAO && taskMain.index == 1) {
+                taskMain.count = 1;
+            }
             getService().taskNext();
         }
     }

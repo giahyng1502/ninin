@@ -113,6 +113,22 @@ app.post('/api/players/add-points', checkAuth, async (req, res) => {
     }
 });
 
+// Chỉnh sửa nhiệm vụ
+app.post('/api/players/set-task', checkAuth, async (req, res) => {
+    const { id, taskId, taskIndex, taskCount } = req.body;
+    try {
+        const tid = parseInt(taskId) || 1;
+        const idx = parseInt(taskIndex) || 0;
+        const cnt = parseInt(taskCount) || 0;
+        const taskStr = JSON.stringify({ id: tid, index: idx, count: cnt });
+        
+        await pool.query('UPDATE players SET taskId = ?, task = ? WHERE id = ?', [tid, taskStr, id]);
+        res.json({ success: true, message: 'Cập nhật nhiệm vụ thành công! (Vui lòng đăng nhập lại game để có hiệu lực)' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ================= PLAYERS API =================
 
 // Quản lý Nhân Vật (có phân trang)

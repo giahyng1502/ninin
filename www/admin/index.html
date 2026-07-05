@@ -41,6 +41,36 @@
                 Đăng Nhập
             </button>
         </div>
+        <!-- Modal Nhiệm Vụ -->
+        <div id="modalTask" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50">
+            <div class="bg-dark-800 rounded-xl p-8 w-full max-w-md border border-dark-600 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Chỉnh Nhiệm Vụ: <span id="taskPlayerName" class="text-white"></span></h2>
+                    <button onclick="closeModal('modalTask')" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="formTask" onsubmit="submitTask(event)">
+                    <input type="hidden" id="taskIdPlayer" />
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-300 text-sm font-bold mb-2"><i class="fas fa-flag mr-2 text-purple-400"></i>ID Nhiệm Vụ</label>
+                            <input type="number" id="taskIdVal" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" placeholder="Ví dụ: 11" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 text-sm font-bold mb-2"><i class="fas fa-step-forward mr-2 text-pink-400"></i>Tiến trình (Index)</label>
+                            <input type="number" id="taskIndexVal" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition-colors" placeholder="Ví dụ: 0 hoặc 1" required>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex justify-end">
+                        <button type="button" onclick="closeModal('modalTask')" class="mr-4 px-5 py-2.5 text-gray-400 hover:text-white transition-colors">Hủy</button>
+                        <button type="submit" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-lg hover:shadow-purple-500/30">Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Sidebar -->
@@ -662,14 +692,11 @@
                 players.forEach(p => {
                     let mapId = p.mapData && p.mapData[0] !== undefined ? p.mapData[0] : -1;
                     let mapName = mapDict[mapId] ? mapDict[mapId] : `Map ${mapId}`;
-                    let onlineBadge = p.online === 1 
-                        ? `<span class="bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded text-xs ml-2"><i class="fas fa-circle text-[8px] mr-1"></i>Online</span>`
-                        : `<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded text-xs ml-2"><i class="fas fa-circle text-[8px] mr-1"></i>Offline</span>`;
                     
                     tbody.innerHTML += `
                         <tr class="hover:bg-dark-700/50 transition-colors">
                             <td class="p-4">${p.id}</td>
-                            <td class="p-4 font-bold text-purple-400">${p.name} ${onlineBadge} <br><span class="text-xs text-gray-500 font-normal">(Túi: ${p.bagCount} món)</span></td>
+                            <td class="p-4 font-bold text-purple-400">${p.name} <br><span class="text-xs text-gray-500 font-normal">(Túi: ${p.bagCount} món)</span></td>
                             <td class="p-4 text-gray-400">${p.username}</td>
                             <td class="p-4">
                                 <div class="text-yellow-400 font-semibold text-sm">Xu: ${p.xu.toLocaleString()}</div>
@@ -679,7 +706,8 @@
                                 <div class="font-bold">Lv.${p.level} <span class="text-xs font-normal text-gray-400">(Phái: ${p.class})</span></div>
                                 <div class="text-xs text-green-400 mt-1"><i class="fas fa-map-marker-alt mr-1"></i> ${mapName}</div>
                             </td>
-                            <td class="p-4 text-right">
+                            <td class="p-4 text-right whitespace-nowrap">
+                                <button onclick="openTaskModal('${p.name}', ${p.id}, ${p.taskId || 0}, '${p.task}')" class="bg-pink-900/40 hover:bg-pink-900/80 text-pink-400 px-3 py-2 rounded transition-colors mr-2" title="Sửa Nhiệm Vụ"><i class="fas fa-flag"></i></button>
                                 <button onclick="openPlayerModal(${p.id}, '${p.name}')" class="bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 border border-purple-500/30 px-3 py-1 rounded transition-colors"><i class="fas fa-magic mr-1"></i> Quản Lý</button>
                             </td>
                         </tr>
@@ -698,7 +726,38 @@
             loadPlayers();
         }
 
-        // Modals
+        // Task & Modals
+        function openTaskModal(name, id, taskId, taskStr) {
+            document.getElementById('taskPlayerName').textContent = name;
+            document.getElementById('taskIdPlayer').value = id;
+            document.getElementById('taskIdVal').value = taskId;
+            let index = 0;
+            try {
+                if (taskStr && taskStr !== 'null') {
+                    const taskObj = JSON.parse(taskStr);
+                    index = taskObj.index || 0;
+                }
+            } catch(e) {}
+            document.getElementById('taskIndexVal').value = index;
+            openModal('modalTask');
+        }
+
+        async function submitTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('taskIdPlayer').value;
+            const taskId = document.getElementById('taskIdVal').value;
+            const taskIndex = document.getElementById('taskIndexVal').value;
+
+            try {
+                const res = await apiCall('/players/set-task', 'POST', { id, taskId, taskIndex, taskCount: 0 });
+                showToast('Thành công', 'Đã cập nhật nhiệm vụ');
+                closeModal('modalTask');
+                loadPlayers();
+            } catch(err) {
+                showToast('Lỗi', err.message, 'red');
+            }
+        }
+
         function openBuffMoneyModal(id, username) {
             document.getElementById('buffUserId').value = id;
             document.getElementById('buffUserLabel').innerText = username;
@@ -744,13 +803,14 @@
             modal.classList.remove('hidden');
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
-                document.getElementById(modalId + 'Content').classList.remove('scale-95');
+                const content = document.getElementById(modalId + 'Content') || modal.querySelector('div');
+                if(content) content.classList.remove('scale-95');
             }, 10);
         }
 
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
-            const content = document.getElementById(modalId + 'Content');
+            const content = document.getElementById(modalId + 'Content') || modal.querySelector('div');
             modal.classList.add('opacity-0');
             if(content) content.classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
