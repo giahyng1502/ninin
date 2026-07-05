@@ -236,9 +236,6 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
         if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi nhận quà.' });
         
-        // Tạo giftcode tạm thời
-        const code = 'GIFT_' + Math.random().toString(36).substring(2, 8).toUpperCase() + Date.now().toString().slice(-4);
-        
         const newItem = {
             id: parseInt(itemId),
             quantity: parseInt(quantity) || 1,
@@ -249,16 +246,11 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
             yen: 0,
             options: []
         };
-        const itemsStr = JSON.stringify([newItem]);
+        const itemStr = JSON.stringify(newItem);
         
-        // Insert giftcode (dùng 1 lần)
-        await pool.query('INSERT INTO gift_codes (code, server_id, coin, gold, yen, items, type, status, created_at) VALUES (?, 0, 0, 0, 0, ?, 1, 0, NOW())', 
-            [code, itemsStr]);
+        await pool.query("UPDATE players SET bag = JSON_ARRAY_APPEND(IFNULL(bag, '[]'), '$', JSON_EXTRACT(?, '$')) WHERE id = ?", [itemStr, id]);
         
-        // Gắn vào giftcode_unpaid của nhân vật
-        await pool.query('UPDATE players SET giftcode_unpaid = ? WHERE id = ?', [code, id]);
-        
-        res.json({ success: true, message: 'Đã buff Item thành công! (Vào game để tự động nhận)' });
+        res.json({ success: true, message: 'Đã thêm vật phẩm trực tiếp vào túi thành công! (Vào game để kiểm tra)' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -274,9 +266,6 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
         
         const player = players[0];
         
-        // Tạo giftcode tạm thời
-        const code = 'GIFT_' + Math.random().toString(36).substring(2, 8).toUpperCase() + Date.now().toString().slice(-4);
-        
         const newItem = {
             id: parseInt(itemId),
             quantity: parseInt(quantity) || 1,
@@ -287,16 +276,11 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
             yen: 0,
             options: []
         };
-        const itemsStr = JSON.stringify([newItem]);
+        const itemStr = JSON.stringify(newItem);
         
-        // Insert giftcode (dùng 1 lần)
-        await pool.query('INSERT INTO gift_codes (code, server_id, coin, gold, yen, items, type, status, created_at) VALUES (?, 0, 0, 0, 0, ?, 1, 0, NOW())', 
-            [code, itemsStr]);
+        await pool.query("UPDATE players SET bag = JSON_ARRAY_APPEND(IFNULL(bag, '[]'), '$', JSON_EXTRACT(?, '$')) WHERE id = ?", [itemStr, player.id]);
         
-        // Gắn vào giftcode_unpaid của nhân vật
-        await pool.query('UPDATE players SET giftcode_unpaid = ? WHERE id = ?', [code, player.id]);
-        
-        res.json({ success: true, message: `Đã tặng Item thành công cho ${playerName}! (Vào game để tự động nhận)` });
+        res.json({ success: true, message: `Đã thêm Item trực tiếp vào túi của ${playerName}! (Vào game để kiểm tra)` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
