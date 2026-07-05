@@ -36,6 +36,7 @@ services:
     restart: always
     volumes:
       - ./Data:/app/Data
+      - ./config.properties:/app/config.properties
 
   caddy:
     image: caddy:2
@@ -61,6 +62,9 @@ services:
       DB_NAME: nsotien_0
     depends_on:
       - mysql
+    volumes:
+      - ./config.properties:/usr/src/app/config.properties
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   mysql_data:

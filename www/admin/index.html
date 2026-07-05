@@ -66,6 +66,9 @@
             <a href="#" onclick="showSection('giftcodes')" id="nav-giftcodes" class="nav-btn flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-all">
                 <i class="fas fa-gift w-6 text-red-400"></i> Quản lý Giftcode
             </a>
+            <a href="#" onclick="showSection('settings')" id="nav-settings" class="nav-btn flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-all">
+                <i class="fas fa-cogs w-6 text-green-400"></i> Cài Đặt Hệ Thống
+            </a>
         </nav>
         <div class="mt-auto text-center text-gray-500 text-sm">
             Powered by Antigravity
@@ -243,6 +246,47 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </section>
+
+        <!-- SETTINGS SECTION -->
+        <section id="settings" class="section-content">
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl p-6 mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold"><i class="fas fa-cogs mr-2 text-green-400"></i> Cấu Hình Server (config.properties)</h2>
+                    <button onclick="saveAndRestartServer()" id="btnSaveConfig" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all shadow-lg shadow-green-500/30 flex items-center">
+                        <i class="fas fa-power-off mr-2"></i> Lưu & Khởi Động Lại Game Server
+                    </button>
+                </div>
+                
+                <div class="bg-yellow-500/20 border border-yellow-500/50 text-yellow-200 p-4 rounded-lg text-sm mb-6 flex items-start">
+                    <i class="fas fa-exclamation-triangle text-xl mr-3 mt-1 text-yellow-500"></i> 
+                    <div>
+                        <strong>Cảnh báo:</strong> Khi bạn nhấn Lưu, Game Server sẽ tự động Khởi động lại ngay lập tức (Thời gian sập: 3-5 giây). Toàn bộ người chơi sẽ bị ngắt kết nối và phải vào lại game. Chỉnh sửa cẩn thận để tránh lỗi khởi động server.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-dark-800 p-4 rounded-xl border border-gray-700">
+                        <label class="block text-gray-400 text-sm font-bold mb-2">Nhân Kinh Nghiệm (EXP):</label>
+                        <input type="number" id="quickExp" onchange="updateConfigText('game.server.exp', this.value)" class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500">
+                    </div>
+                    <div class="bg-dark-800 p-4 rounded-xl border border-gray-700">
+                        <label class="block text-gray-400 text-sm font-bold mb-2">Tỉ lệ đập đồ cộng thêm (%):</label>
+                        <input type="number" id="quickUpgrade" onchange="updateConfigText('game.upgrade.percent.add', this.value)" class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500">
+                    </div>
+                    <div class="bg-dark-800 p-4 rounded-xl border border-gray-700">
+                        <label class="block text-gray-400 text-sm font-bold mb-2">Giới hạn Cấp độ tối đa:</label>
+                        <input type="number" id="quickMaxLv" onchange="updateConfigText('game.server.maxLV', this.value)" class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500">
+                    </div>
+                    <div class="bg-dark-800 p-4 rounded-xl border border-gray-700">
+                        <label class="block text-gray-400 text-sm font-bold mb-2">Giới hạn Online (Login Limit):</label>
+                        <input type="number" id="quickLimit" onchange="updateConfigText('game.login.limit', this.value)" class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-500">
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-gray-300 mb-2">Trình sửa Text gốc (Raw):</h3>
+                <textarea id="configRawContent" rows="15" class="w-full bg-dark-900 border border-gray-600 rounded-lg p-4 text-green-400 font-mono text-sm focus:outline-none focus:border-green-500" spellcheck="false"></textarea>
             </div>
         </section>
     </main>
@@ -511,13 +555,14 @@
             activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
             activeBtn.classList.remove('text-gray-400');
 
-            const titles = { dashboard: 'Bảng Điều Khiển', users: 'Quản lý Tài Khoản', players: 'Quản lý Nhân Vật', items: 'Từ Điển ID Vật Phẩm', giftcodes: 'Quản Lý Giftcode' };
+            const titles = { dashboard: 'Bảng Điều Khiển', users: 'Quản lý Tài Khoản', players: 'Quản lý Nhân Vật', items: 'Từ Điển ID Vật Phẩm', giftcodes: 'Quản Lý Giftcode', settings: 'Cài Đặt Hệ Thống' };
             document.getElementById('pageTitle').innerText = titles[id];
 
             if(id === 'users') loadUsers();
             if(id === 'dashboard') loadStats();
             if(id === 'items') searchItems();
             if(id === 'giftcodes') loadGiftcodes();
+            if(id === 'settings') loadConfig();
         }
 
         // Stats
@@ -872,6 +917,57 @@
                 showToast('Thành công', data.message);
                 loadGiftcodes();
             } catch(e) {}
+        }
+
+        // --- Config Settings APIs ---
+        
+        async function loadConfig() {
+            document.getElementById('configRawContent').value = 'Đang tải...';
+            try {
+                const res = await apiCall('/config');
+                const content = res.data;
+                document.getElementById('configRawContent').value = content;
+                
+                // Parse for quick inputs
+                document.getElementById('quickExp').value = extractConfigValue(content, 'game.server.exp');
+                document.getElementById('quickUpgrade').value = extractConfigValue(content, 'game.upgrade.percent.add');
+                document.getElementById('quickMaxLv').value = extractConfigValue(content, 'game.server.maxLV');
+                document.getElementById('quickLimit').value = extractConfigValue(content, 'game.login.limit');
+            } catch(e) {}
+        }
+
+        function extractConfigValue(text, key) {
+            const regex = new RegExp(`^${key}=(.*)$`, 'm');
+            const match = text.match(regex);
+            return match ? match[1].trim() : '';
+        }
+
+        function updateConfigText(key, newValue) {
+            let text = document.getElementById('configRawContent').value;
+            const regex = new RegExp(`^${key}=.*$`, 'm');
+            if (regex.test(text)) {
+                text = text.replace(regex, `${key}=${newValue}`);
+            } else {
+                text += `\n${key}=${newValue}`;
+            }
+            document.getElementById('configRawContent').value = text;
+        }
+
+        async function saveAndRestartServer() {
+            if(!confirm('CẢNH BÁO: Game Server sẽ khởi động lại ngay lập tức và toàn bộ người chơi sẽ bị mất kết nối.\nBạn có chắc chắn muốn Lưu và Khởi Động Lại?')) return;
+            
+            const btn = document.getElementById('btnSaveConfig');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...';
+            btn.disabled = true;
+            
+            const content = document.getElementById('configRawContent').value;
+            try {
+                const data = await apiCall('/config', 'POST', { content });
+                showToast('Thành công', data.message);
+            } catch(e) {}
+            
+            btn.innerHTML = '<i class="fas fa-power-off mr-2"></i> Lưu & Khởi Động Lại Game Server';
+            btn.disabled = false;
         }
     </script>
 </body>

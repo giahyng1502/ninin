@@ -1,6 +1,9 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const fs = require('fs').promises;
+const path = require('path');
+const http = require('http');
 
 const app = express();
 app.use(cors());
@@ -257,6 +260,54 @@ app.delete('/api/giftcodes/:id', checkAuth, async (req, res) => {
     try {
         await pool.query('DELETE FROM gift_codes WHERE id = ?', [req.params.id]);
         res.json({ success: true, message: 'Đã xóa Giftcode!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ===== SYSTEM CONFIG & DOCKER RESTART =====
+const CONFIG_PATH = path.join(__dirname, 'config.properties');
+
+app.get('/api/config', checkAuth, async (req, res) => {
+    try {
+        const content = await fs.readFile(CONFIG_PATH, 'utf-8');
+        res.json({ success: true, data: content });
+    } catch (err) {
+        res.status(500).json({ error: 'Không thể đọc file config: ' + err.message });
+    }
+});
+
+app.post('/api/config', checkAuth, async (req, res) => {
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ error: 'Nội dung rỗng' });
+    
+    try {
+        await fs.writeFile(CONFIG_PATH, content, 'utf-8');
+        
+        // Gọi Docker API qua Unix Socket để restart game-server
+        const options = {
+            socketPath: '/var/run/docker.sock',
+            path: '/containers/nsokiss_game_server/restart?t=5', // timeout 5s
+            method: 'POST'
+        };
+        
+        const dockerReq = http.request(options, (dockerRes) => {
+            if (dockerRes.statusCode === 204) {
+                res.json({ success: true, message: 'Đã lưu cấu hình & Khởi động lại Server thành công!' });
+            } else {
+                let body = '';
+                dockerRes.on('data', chunk => body += chunk);
+                dockerRes.on('end', () => {
+                    res.status(500).json({ error: `Lỗi restart server (Status ${dockerRes.statusCode}): ${body}` });
+                });
+            }
+        });
+        
+        dockerReq.on('error', (e) => {
+            res.status(500).json({ error: 'Lưu config thành công nhưng lỗi kết nối Docker: ' + e.message });
+        });
+        
+        dockerReq.end();
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
