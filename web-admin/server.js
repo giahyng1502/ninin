@@ -157,39 +157,35 @@ app.post('/api/players/add-money', checkAuth, async (req, res) => {
     }
 });
 
-// Thêm vật phẩm vào túi đồ nhân vật bằng ID
+// Thêm vật phẩm vào túi đồ nhân vật bằng ID (Tự động đúc chỉ số qua Giftcode)
 app.post('/api/players/add-item', checkAuth, async (req, res) => {
     const { id, itemId, quantity, isLock, upgrade } = req.body;
     try {
-        const [rows] = await pool.query('SELECT p.bag, u.online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
+        const [rows] = await pool.query('SELECT p.id, u.online, p.giftcode_unpaid FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
-        if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi tặng.' });
+        if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi nhận quà.' });
         
-        let bag = [];
-        try { bag = JSON.parse(rows[0].bag); } catch (e) { bag = []; }
-
-        let nextIndex = 0;
-        const usedIndexes = bag.map(item => item.index !== undefined ? item.index : -1);
-        while (usedIndexes.includes(nextIndex)) nextIndex++;
-
+        // Tạo giftcode tạm thời
+        const code = 'GIFT_' + Math.random().toString(36).substring(2, 8).toUpperCase() + Date.now().toString().slice(-4);
+        
         const newItem = {
             id: parseInt(itemId),
             quantity: parseInt(quantity) || 1,
             isLock: isLock ? true : false,
             upgrade: parseInt(upgrade) || 0,
             sys: 0,
-            expire: -1,
-            new: true,
-            yen: 0,
-            created_at: Date.now(),
-            updated_at: Date.now(),
-            index: nextIndex,
             options: []
         };
+        const itemsStr = JSON.stringify([newItem]);
         
-        bag.push(newItem);
-        await pool.query('UPDATE players SET bag = ? WHERE id = ?', [JSON.stringify(bag), id]);
-        res.json({ success: true, message: 'Đã buff Item vào túi thành công!' });
+        // Insert giftcode (dùng 1 lần)
+        await pool.query('INSERT INTO gift_codes (code, gold, coin, yen, items, is_limited, limit_count) VALUES (?, 0, 0, 0, ?, 1, 1)', 
+            [code, itemsStr]);
+        
+        // Gắn vào giftcode_unpaid của nhân vật
+        await pool.query('UPDATE players SET giftcode_unpaid = ? WHERE id = ?', [code, id]);
+        
+        res.json({ success: true, message: 'Đã buff Item thành công! (Vào game để tự động nhận)' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -199,36 +195,33 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
 app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
     const { playerName, itemId, quantity, isLock, upgrade } = req.body;
     try {
-        const [players] = await pool.query('SELECT p.id, p.bag, u.online FROM players p JOIN users u ON p.user_id = u.id WHERE p.name = ?', [playerName]);
+        const [players] = await pool.query('SELECT p.id, u.online FROM players p JOIN users u ON p.user_id = u.id WHERE p.name = ?', [playerName]);
         if (players.length === 0) return res.status(404).json({ error: 'Không tìm thấy tên nhân vật này' });
-        if (players[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi tặng.' });
+        if (players[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi nhận quà.' });
         
         const player = players[0];
-        let bag = [];
-        try { bag = JSON.parse(player.bag); } catch (e) { bag = []; }
-
-        let nextIndex = 0;
-        const usedIndexes = bag.map(item => item.index !== undefined ? item.index : -1);
-        while (usedIndexes.includes(nextIndex)) nextIndex++;
-
+        
+        // Tạo giftcode tạm thời
+        const code = 'GIFT_' + Math.random().toString(36).substring(2, 8).toUpperCase() + Date.now().toString().slice(-4);
+        
         const newItem = {
             id: parseInt(itemId),
             quantity: parseInt(quantity) || 1,
             isLock: isLock ? true : false,
             upgrade: parseInt(upgrade) || 0,
             sys: 0,
-            expire: -1,
-            new: true,
-            yen: 0,
-            created_at: Date.now(),
-            updated_at: Date.now(),
-            index: nextIndex,
             options: []
         };
+        const itemsStr = JSON.stringify([newItem]);
         
-        bag.push(newItem);
-        await pool.query('UPDATE players SET bag = ? WHERE id = ?', [JSON.stringify(bag), player.id]);
-        res.json({ success: true, message: `Đã tặng Item thành công cho ${playerName}!` });
+        // Insert giftcode (dùng 1 lần)
+        await pool.query('INSERT INTO gift_codes (code, gold, coin, yen, items, is_limited, limit_count) VALUES (?, 0, 0, 0, ?, 1, 1)', 
+            [code, itemsStr]);
+        
+        // Gắn vào giftcode_unpaid của nhân vật
+        await pool.query('UPDATE players SET giftcode_unpaid = ? WHERE id = ?', [code, player.id]);
+        
+        res.json({ success: true, message: `Đã tặng Item thành công cho ${playerName}! (Vào game để tự động nhận)` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
