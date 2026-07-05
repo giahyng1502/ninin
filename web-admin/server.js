@@ -179,7 +179,7 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
         const itemsStr = JSON.stringify([newItem]);
         
         // Insert giftcode (dùng 1 lần)
-        await pool.query('INSERT INTO gift_codes (code, gold, coin, yen, items, is_limited, limit_count) VALUES (?, 0, 0, 0, ?, 1, 1)', 
+        await pool.query('INSERT INTO gift_codes (code, coin, gold, yen, items, type, status, created_at) VALUES (?, 0, 0, 0, ?, 1, 0, NOW())', 
             [code, itemsStr]);
         
         // Gắn vào giftcode_unpaid của nhân vật
@@ -215,7 +215,7 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
         const itemsStr = JSON.stringify([newItem]);
         
         // Insert giftcode (dùng 1 lần)
-        await pool.query('INSERT INTO gift_codes (code, gold, coin, yen, items, is_limited, limit_count) VALUES (?, 0, 0, 0, ?, 1, 1)', 
+        await pool.query('INSERT INTO gift_codes (code, coin, gold, yen, items, type, status, created_at) VALUES (?, 0, 0, 0, ?, 1, 0, NOW())', 
             [code, itemsStr]);
         
         // Gắn vào giftcode_unpaid của nhân vật
