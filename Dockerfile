@@ -1,5 +1,5 @@
 # Stage 1: Build the Java project
-FROM maven:3.8.4-openjdk-17-slim AS build
+FROM maven:3.8-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
 # Tai xuong cac dependencies truoc (giup cache Docker layer)
@@ -9,7 +9,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Run the Java application
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 # Copy cac thu muc data, config, va database.sql
 COPY Data ./Data
