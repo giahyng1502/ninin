@@ -88,7 +88,15 @@ public class NinjaSchool extends WindowAdapter implements ActionListener {
                 return;
             }
             if (NinjaUtils.availablePort(Config.getInstance().getPort())) {
-                new NinjaSchool();
+                try {
+                    if (!GraphicsEnvironment.isHeadless()) {
+                        new NinjaSchool();
+                    } else {
+                        Log.info("Running in headless mode, skipping GUI initialization.");
+                    }
+                } catch (Exception e) {
+                    Log.error("Could not initialize GUI: " + e.getMessage());
+                }
                 if (!Server.init()) {
                     Log.error("Khoi tao that bai!");
                     return;
