@@ -14055,6 +14055,13 @@ public class Char {
                         this.taskMain = TaskFactory.getInstance().createTask(taskID, taskIndex, taskCount);
                     }
                 }
+
+                // Tự động bỏ qua nhiệm vụ Bạn hữu tâm giao (ID 11)
+                if (this.taskId == TaskName.NV_BAN_HUU_TAM_GIAO) {
+                    this.taskId = TaskName.NV_BAN_HUU_TAM_GIAO + 1;
+                    this.taskMain = null;
+                }
+
                 this.setLoadFinish(true);
                 Object obj = rs.getObject("message");
                 if (obj != null) {
@@ -18197,6 +18204,12 @@ public class Char {
             } else {
                 taskId++;
             }
+
+            // Tự động bỏ qua nhiệm vụ Bạn hữu tâm giao (ID 11)
+            if (taskId == TaskName.NV_BAN_HUU_TAM_GIAO) {
+                taskId++;
+            }
+
             getService().taskFinish();
         }
         initListCanEnterMap();
