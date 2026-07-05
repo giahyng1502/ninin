@@ -41,38 +41,40 @@
                 Đăng Nhập
             </button>
         </div>
-        <!-- Modal Nhiệm Vụ -->
-        <div id="modalTask" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50">
-            <div class="bg-dark-800 rounded-xl p-8 w-full max-w-md border border-dark-600 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Chỉnh Nhiệm Vụ: <span id="taskPlayerName" class="text-white"></span></h2>
-                    <button onclick="closeModal('modalTask')" class="text-gray-400 hover:text-white transition-colors">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <form id="formTask" onsubmit="submitTask(event)">
-                    <input type="hidden" id="taskIdPlayer" />
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-gray-300 text-sm font-bold mb-2"><i class="fas fa-flag mr-2 text-purple-400"></i>ID Nhiệm Vụ</label>
-                            <input type="number" id="taskIdVal" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" placeholder="Ví dụ: 11" required>
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 text-sm font-bold mb-2"><i class="fas fa-step-forward mr-2 text-pink-400"></i>Tiến trình (Index)</label>
-                            <input type="number" id="taskIndexVal" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition-colors" placeholder="Ví dụ: 0 hoặc 1" required>
-                        </div>
-                    </div>
+    </div>
 
-                    <div class="mt-8 flex justify-end">
-                        <button type="button" onclick="closeModal('modalTask')" class="mr-4 px-5 py-2.5 text-gray-400 hover:text-white transition-colors">Hủy</button>
-                        <button type="submit" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-lg hover:shadow-purple-500/30">Cập nhật</button>
-                    </div>
-                </form>
+    <!-- Modal Nhiệm Vụ -->
+    <div id="modalTask" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity">
+        <div class="bg-dark-800 rounded-xl p-8 w-full max-w-md border border-dark-600 shadow-2xl scale-95 transition-all duration-300 transform" id="modalTaskContent">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Chỉnh Nhiệm Vụ: <span id="taskPlayerName" class="text-white"></span></h2>
+                <button onclick="closeModal('modalTask')" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
+            <form id="formTask" onsubmit="submitTask(event)">
+                <input type="hidden" id="taskIdPlayer" />
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-300 text-sm font-bold mb-2"><i class="fas fa-flag mr-2 text-purple-400"></i>ID Nhiệm Vụ</label>
+                        <input type="number" id="taskIdVal" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" placeholder="Ví dụ: 11" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 text-sm font-bold mb-2"><i class="fas fa-step-forward mr-2 text-pink-400"></i>Tiến trình (Index)</label>
+                        <input type="number" id="taskIndexVal" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition-colors" placeholder="Ví dụ: 0 hoặc 1" required>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-end">
+                    <button type="button" onclick="closeModal('modalTask')" class="mr-4 px-5 py-2.5 text-gray-400 hover:text-white transition-colors">Hủy</button>
+                    <button type="submit" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-lg hover:shadow-purple-500/30">Cập nhật</button>
+                </div>
+            </form>
         </div>
     </div>
 
+    <!-- Scripts -->
     <!-- Sidebar -->
     <aside class="w-full md:w-64 glass-panel md:min-h-screen flex flex-col p-4 z-10 sticky top-0 md:fixed md:inset-y-0 shadow-xl border-r border-gray-800">
         <div class="flex items-center justify-center mb-8 pt-4">
