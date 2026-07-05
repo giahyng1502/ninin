@@ -107,8 +107,8 @@ app.get('/api/players', checkAuth, async (req, res) => {
 
     try {
         const query = search 
-            ? 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, u.username, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id WHERE p.name LIKE ? ORDER BY p.id DESC LIMIT ? OFFSET ?'
-            : 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, u.username, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC LIMIT ? OFFSET ?';
+            ? 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, u.username, u.online, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id WHERE p.name LIKE ? ORDER BY p.id DESC LIMIT ? OFFSET ?'
+            : 'SELECT p.id, p.name, p.xu, p.yen, p.bag, p.map, p.class, u.username, u.online, JSON_EXTRACT(p.data, "$.level") as level FROM players p JOIN users u ON p.user_id = u.id ORDER BY p.id DESC LIMIT ? OFFSET ?';
         
         const countQuery = search 
             ? 'SELECT COUNT(*) as total FROM players WHERE name LIKE ?'
@@ -136,7 +136,8 @@ app.get('/api/players', checkAuth, async (req, res) => {
                 level: r.level || 0,
                 class: r.class || 0,
                 bagCount,
-                mapData
+                mapData,
+                online: r.online
             }
         });
         res.json({ data: players, total: countResult[0].total });

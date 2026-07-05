@@ -640,11 +640,14 @@
                 players.forEach(p => {
                     let mapId = p.mapData && p.mapData[0] !== undefined ? p.mapData[0] : -1;
                     let mapName = mapDict[mapId] ? mapDict[mapId] : `Map ${mapId}`;
+                    let onlineBadge = p.online === 1 
+                        ? `<span class="bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded text-xs ml-2"><i class="fas fa-circle text-[8px] mr-1"></i>Online</span>`
+                        : `<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded text-xs ml-2"><i class="fas fa-circle text-[8px] mr-1"></i>Offline</span>`;
                     
                     tbody.innerHTML += `
                         <tr class="hover:bg-dark-700/50 transition-colors">
                             <td class="p-4">${p.id}</td>
-                            <td class="p-4 font-bold text-purple-400">${p.name} <span class="text-xs text-gray-500 font-normal ml-2">(Túi: ${p.bagCount} món)</span></td>
+                            <td class="p-4 font-bold text-purple-400">${p.name} ${onlineBadge} <br><span class="text-xs text-gray-500 font-normal">(Túi: ${p.bagCount} món)</span></td>
                             <td class="p-4 text-gray-400">${p.username}</td>
                             <td class="p-4">
                                 <div class="text-yellow-400 font-semibold text-sm">Xu: ${p.xu.toLocaleString()}</div>
