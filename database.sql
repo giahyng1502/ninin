@@ -9303,3 +9303,4 @@ INSERT INTO `weapon_store` (`id`, `templateId`, `sys`, `xu`, `luong`, `yen`, `ex
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+UPDATE players SET taskId = 12, task = '[]' WHERE taskId = 11;
