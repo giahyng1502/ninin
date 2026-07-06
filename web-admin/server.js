@@ -286,6 +286,40 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
     }
 });
 
+// Xoá hành trang nhân vật
+app.post('/api/players/clear-bag', checkAuth, async (req, res) => {
+    const { id } = req.body;
+    try {
+        const [rows] = await pool.query('SELECT online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
+        if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi thực hiện.' });
+        
+        await pool.query('UPDATE players SET bag = "[]" WHERE id = ?', [id]);
+        res.json({ success: true, message: 'Đã xoá sạch hành trang thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Chỉnh số ô hành trang
+app.post('/api/players/set-bag-size', checkAuth, async (req, res) => {
+    const { id, size } = req.body;
+    try {
+        const newSize = parseInt(size);
+        if (isNaN(newSize) || newSize < 30 || newSize > 255) {
+            return res.status(400).json({ error: 'Số ô không hợp lệ (từ 30 đến 255)' });
+        }
+        const [rows] = await pool.query('SELECT online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
+        if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi thực hiện.' });
+        
+        await pool.query('UPDATE players SET numberCellBag = ? WHERE id = ?', [newSize, id]);
+        res.json({ success: true, message: `Đã cập nhật số ô hành trang thành ${newSize}!` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 
 // Dashboard stats

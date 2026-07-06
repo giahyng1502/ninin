@@ -365,6 +365,7 @@
                 <button onclick="switchPlayerTab('money')" id="tab-btn-money" class="flex-1 py-3 font-semibold border-b-2 border-purple-500 text-purple-400 transition-colors">Xu / Yên</button>
                 <button onclick="switchPlayerTab('item')" id="tab-btn-item" class="flex-1 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition-colors">Thêm Đồ</button>
                 <button onclick="switchPlayerTab('explevel')" id="tab-btn-explevel" class="flex-1 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition-colors">Level/Exp</button>
+                <button onclick="switchPlayerTab('bag')" id="tab-btn-bag" class="flex-1 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition-colors">Hành Trang</button>
             </div>
 
             <!-- Tab Money -->
@@ -869,7 +870,7 @@
         }
 
         function switchPlayerTab(tab) {
-            const tabs = ['money', 'item', 'explevel'];
+            const tabs = ['money', 'item', 'explevel', 'bag'];
             tabs.forEach(t => {
                 if (t === tab) {
                     document.getElementById(`tab-${t}`).classList.remove('hidden');
@@ -942,6 +943,28 @@
             }
             try {
                 const data = await apiCall('/players/add-item', 'POST', { id, itemId, quantity: qty, isLock, upgrade });
+                showToast('Thành công', data.message);
+                closeModal('modalPlayer');
+                loadPlayers();
+            } catch(e) {}
+        }
+
+        async function submitClearBag() {
+            if(!confirm('Bạn có chắc chắn muốn xoá sạch hành trang của nhân vật này không? Hành động này không thể hoàn tác!')) return;
+            const id = document.getElementById('buffPlayerId').value;
+            try {
+                const data = await apiCall('/players/clear-bag', 'POST', { id });
+                showToast('Thành công', data.message);
+                closeModal('modalPlayer');
+                loadPlayers();
+            } catch(e) {}
+        }
+
+        async function submitSetBagSize() {
+            const id = document.getElementById('buffPlayerId').value;
+            const size = document.getElementById('buffBagSize').value;
+            try {
+                const data = await apiCall('/players/set-bag-size', 'POST', { id, size });
                 showToast('Thành công', data.message);
                 closeModal('modalPlayer');
                 loadPlayers();
