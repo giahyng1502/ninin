@@ -1,0 +1,10 @@
+
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .toast { transition: all 0.3s ease; transform: translateY(100%); opacity: 0; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        /* Hide all sections initially */
+        .section-content { display: none; }
+        .section-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
