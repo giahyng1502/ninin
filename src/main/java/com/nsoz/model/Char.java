@@ -166,7 +166,7 @@ public class Char {
     public short potentialPoint, skillPoint;
     public int pointUyDanh, pointNon, pointVuKhi, pointAo, pointLien, pointGangTay, pointNhan, pointQuan, pointNgocBoi, pointGiay, pointPhu, pointTinhTu, countFinishDay, countLoopBoss, limitTiemNangSo, limitKyNangSo, limitPhongLoi, limitBangHoa, countPB, pointPB, countUseItemGlory, countUseItemDungeo, countUseItemBeast, countGlory, countArenaT;
     public byte speed;
-    public byte numberCellBag, numberCellBox;
+    public int numberCellBag, numberCellBox;
     public Zone zone;
     public short mapId, x, y, preX, preY;
     public short eff5buffhp, eff5buffmp;
@@ -13667,8 +13667,8 @@ public class Char {
                         }
                     }
                 }
-                this.numberCellBag = rs.getByte("numberCellBag");
-                this.numberCellBox = rs.getByte("numberCellBox");
+                this.numberCellBag = rs.getInt("numberCellBag");
+                this.numberCellBox = rs.getInt("numberCellBox");
                 JSONObject json = (JSONObject) JSONValue.parse(rs.getString("data"));
                 ParseData parse = new ParseData(json);
                 this.expDown = parse.getLong("expDown");
