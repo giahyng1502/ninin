@@ -290,7 +290,7 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
 app.post('/api/players/clear-bag', checkAuth, async (req, res) => {
     const { id } = req.body;
     try {
-        const [rows] = await pool.query('SELECT online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
+        const [rows] = await pool.query('SELECT u.online AS online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
         if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi thực hiện.' });
         
@@ -309,7 +309,7 @@ app.post('/api/players/set-bag-size', checkAuth, async (req, res) => {
         if (isNaN(newSize) || newSize < 30 || newSize > 255) {
             return res.status(400).json({ error: 'Số ô không hợp lệ (từ 30 đến 255)' });
         }
-        const [rows] = await pool.query('SELECT online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
+        const [rows] = await pool.query('SELECT u.online AS online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
         if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi thực hiện.' });
         

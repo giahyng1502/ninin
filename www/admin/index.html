@@ -428,6 +428,27 @@
                     <button onclick="submitPlayerExpLevel()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-yellow-500/30">Cộng Level / Exp</button>
                 </div>
             </div>
+
+            <!-- Tab Bag -->
+            <div id="tab-bag" class="hidden">
+                <div class="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-lg text-sm mb-4">
+                    <p><i class="fas fa-exclamation-triangle mr-2"></i> Yêu cầu: Nhân vật phải ĐANG OFFLINE (Thoát game) trước khi thao tác.</p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Số ô hành trang (Mặc định: 30, Tối đa: 255):</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="buffBagSize" value="30" min="30" max="255" class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500">
+                        <button onclick="submitSetBagSize()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg shadow-purple-500/30">Lưu Số Ô</button>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Xoá toàn bộ vật phẩm trong hành trang:</label>
+                    <button onclick="submitClearBag()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-red-500/30"><i class="fas fa-trash-alt mr-2"></i> Xoá Sạch Hành Trang</button>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="closeModal('modalPlayer')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors">Đóng</button>
+                </div>
+            </div>
                 
                 <hr class="border-gray-700 my-6">
                 
