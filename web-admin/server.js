@@ -633,7 +633,13 @@ app.post('/api/clans/add-member', checkAuth, async (req, res) => {
     try {
         const [player] = await pool.query('SELECT id, class, clan FROM players WHERE name = ?', [member_name]);
         if (player.length === 0) return res.status(404).json({ error: `Không tìm thấy nhân vật ${member_name}` });
-        if (player[0].clan !== -1 && player[0].clan !== 0) return res.status(400).json({ error: `Nhân vật ${member_name} đã nằm trong một gia tộc khác` });
+        
+        if (player[0].clan === id) {
+            return res.status(400).json({ error: `Nhân vật ${member_name} đã ở trong gia tộc này rồi` });
+        }
+        if (player[0].clan !== -1 && player[0].clan !== 0) {
+            return res.status(400).json({ error: `Nhân vật ${member_name} đã nằm trong một gia tộc khác` });
+        }
 
         // Type 0 is normal member
         await pool.query('INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 0)', [member_name, player[0].class, id]);
