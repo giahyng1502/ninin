@@ -657,7 +657,7 @@
                 document.getElementById('quickUpgrade').value = extractConfigValue(content, 'game.upgrade.percent.add');
                 document.getElementById('quickMaxLv').value = extractConfigValue(content, 'game.server.maxLV');
                 document.getElementById('quickLimit').value = extractConfigValue(content, 'game.login.limit');
-                document.getElementById('quickEvent').value = extractConfigValue(content, 'event');
+                document.getElementById('quickEvent').value = extractConfigValue(content, 'game.event');
             } catch(e) {}
         }
 
