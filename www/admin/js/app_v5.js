@@ -624,7 +624,16 @@
                     html += '<tr><td colspan="4" class="py-4 text-center text-gray-500">Chưa có thành viên nào</td></tr>';
                 } else {
                     members.forEach(m => {
-                        let role = m.type === 2 ? '<span class="text-red-400 font-bold">Tộc trưởng</span>' : (m.type === 1 ? '<span class="text-orange-400 font-bold">Phó tộc</span>' : 'Thành viên');
+                        let role = 'Thành viên';
+                        if (m.type === 4) {
+                            role = '<span class="text-red-400 font-bold">Tộc trưởng</span>';
+                        } else if (m.type === 3) {
+                            role = '<span class="text-orange-400 font-bold">Phó tộc</span>';
+                        } else if (m.type === 2) {
+                            role = '<span class="text-yellow-400 font-bold">Trưởng lão</span>';
+                        } else if (m.type === 1) {
+                            role = '<span class="text-blue-400 font-semibold">Ưu tú</span>';
+                        }
                         html += `
                             <tr class="border-b border-gray-700">
                                 <td class="py-2">${m.name}</td>

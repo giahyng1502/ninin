@@ -528,7 +528,7 @@ app.post('/api/clans/create', checkAuth, async (req, res) => {
         const clanId = insertResult.insertId;
         
         await pool.query(
-            'INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 2)',
+            'INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 4)',
             [main_name, player[0].class, clanId]
         );
         
@@ -558,12 +558,12 @@ app.post('/api/clans/update', checkAuth, async (req, res) => {
             const [p1] = await pool.query('SELECT id, class FROM players WHERE name = ?', [main_name]);
             if (p1.length === 0) return res.status(404).json({ error: `Không tìm thấy nhân vật ${main_name}` });
             
-            // Upsert clan_member for main_name (Tộc Trưởng type 2)
+            // Upsert clan_member for main_name (Tộc Trưởng type 4)
             const [m1] = await pool.query('SELECT id FROM clan_member WHERE name = ? AND clan = ?', [main_name, id]);
             if (m1.length > 0) {
-                await pool.query('UPDATE clan_member SET type = 2 WHERE name = ? AND clan = ?', [main_name, id]);
+                await pool.query('UPDATE clan_member SET type = 4 WHERE name = ? AND clan = ?', [main_name, id]);
             } else {
-                await pool.query('INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 2)', [main_name, p1[0].class, id]);
+                await pool.query('INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 4)', [main_name, p1[0].class, id]);
                 await pool.query('UPDATE players SET clan = ? WHERE name = ?', [id, main_name]);
             }
         }
@@ -572,12 +572,12 @@ app.post('/api/clans/update', checkAuth, async (req, res) => {
             const [p2] = await pool.query('SELECT id, class FROM players WHERE name = ?', [assist_name]);
             if (p2.length === 0) return res.status(404).json({ error: `Không tìm thấy nhân vật ${assist_name}` });
             
-            // Upsert clan_member for assist_name (Phó tộc type 1)
+            // Upsert clan_member for assist_name (Phó tộc type 3)
             const [m2] = await pool.query('SELECT id FROM clan_member WHERE name = ? AND clan = ?', [assist_name, id]);
             if (m2.length > 0) {
-                await pool.query('UPDATE clan_member SET type = 1 WHERE name = ? AND clan = ?', [assist_name, id]);
+                await pool.query('UPDATE clan_member SET type = 3 WHERE name = ? AND clan = ?', [assist_name, id]);
             } else {
-                await pool.query('INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 1)', [assist_name, p2[0].class, id]);
+                await pool.query('INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 3)', [assist_name, p2[0].class, id]);
                 await pool.query('UPDATE players SET clan = ? WHERE name = ?', [id, assist_name]);
             }
         }
