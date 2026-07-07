@@ -574,7 +574,9 @@
             Swal.fire({
                 title: 'Cập nhật Gia Tộc',
                 html: `
-                    <div class="mb-2 text-left text-sm text-gray-400">Level:</div>
+                    <div class="mb-2 text-left text-sm text-gray-400">Tên Gia Tộc mới (để trống nếu giữ nguyên):</div>
+                    <input id="swal-clan-name" class="swal2-input" value="${clan.name}">
+                    <div class="mb-2 mt-4 text-left text-sm text-gray-400">Level:</div>
                     <input id="swal-clan-level" type="number" class="swal2-input" value="${clan.level}">
                     <div class="mb-2 mt-4 text-left text-sm text-gray-400">Tên Tộc Trưởng mới (để trống nếu giữ nguyên):</div>
                     <input id="swal-clan-main" class="swal2-input" value="${clan.main_name}">
@@ -589,6 +591,7 @@
                 confirmButtonColor: '#3b82f6',
                 preConfirm: () => {
                     return [
+                        document.getElementById('swal-clan-name').value,
                         document.getElementById('swal-clan-level').value,
                         document.getElementById('swal-clan-main').value,
                         document.getElementById('swal-clan-assist').value
@@ -596,9 +599,9 @@
                 }
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    const [level, main_name, assist_name] = result.value;
+                    const [name, level, main_name, assist_name] = result.value;
                     try {
-                        const data = await apiCall('/clans/update', 'POST', { id, level, main_name, assist_name });
+                        const data = await apiCall('/clans/update', 'POST', { id, name, level, main_name, assist_name });
                         showToast('Thành công', data.message);
                         loadClans();
                     } catch (e) {

@@ -541,11 +541,17 @@ app.post('/api/clans/create', checkAuth, async (req, res) => {
     }
 });
 
-// Cập nhật gia tộc (Đổi trưởng/phó tộc, level)
+// Cập nhật gia tộc (Đổi trưởng/phó tộc, level, tên gia tộc)
 app.post('/api/clans/update', checkAuth, async (req, res) => {
-    const { id, level, main_name, assist_name } = req.body;
+    const { id, level, main_name, assist_name, name } = req.body;
     try {
         const lv = parseInt(level) || 1;
+        
+        // Kiểm tra xem tên gia tộc mới có bị trùng không
+        if (name) {
+            const [existing] = await pool.query('SELECT id FROM clan WHERE name = ? AND id != ?', [name, id]);
+            if (existing.length > 0) return res.status(400).json({ error: 'Tên gia tộc này đã được sử dụng' });
+        }
         
         // Ensure members exist before assigning roles
         if (main_name) {
@@ -576,7 +582,11 @@ app.post('/api/clans/update', checkAuth, async (req, res) => {
             }
         }
         
-        await pool.query('UPDATE clan SET level = ?, main_name = ?, assist_name = ? WHERE id = ?', [lv, main_name, assist_name, id]);
+        if (name) {
+            await pool.query('UPDATE clan SET level = ?, main_name = ?, assist_name = ?, name = ? WHERE id = ?', [lv, main_name, assist_name, name, id]);
+        } else {
+            await pool.query('UPDATE clan SET level = ?, main_name = ?, assist_name = ? WHERE id = ?', [lv, main_name, assist_name, id]);
+        }
         
         res.json({ success: true, message: 'Cập nhật thông tin Gia Tộc thành công! Lưu ý: Server cần khởi động lại để cập nhật.' });
     } catch (err) {
