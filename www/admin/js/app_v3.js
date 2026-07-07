@@ -523,8 +523,9 @@
                         <td class="p-4 text-gray-400">${c.assist_name || '-'}</td>
                         <td class="p-4"><span class="bg-gray-700 text-white px-2 py-1 rounded text-xs font-bold">Lv ${c.level}</span></td>
                         <td class="p-4 text-right space-x-2">
-                            <button onclick="openUpdateClanModal(${c.id})" class="text-blue-400 hover:text-blue-300 p-2"><i class="fas fa-edit"></i> Sửa</button>
-                            <button onclick="openAddMemberModal(${c.id})" class="text-green-400 hover:text-green-300 p-2"><i class="fas fa-user-plus"></i></button>
+                            <button onclick="openClanMembersModal(${c.id})" class="text-indigo-400 hover:text-indigo-300 p-2" title="Danh sách thành viên"><i class="fas fa-users"></i></button>
+                            <button onclick="openUpdateClanModal(${c.id})" class="text-blue-400 hover:text-blue-300 p-2" title="Sửa thông tin"><i class="fas fa-edit"></i></button>
+                            <button onclick="openAddMemberModal(${c.id})" class="text-green-400 hover:text-green-300 p-2" title="Thêm thành viên"><i class="fas fa-user-plus"></i></button>
                         </td>
                     </tr>
                 `).join('');
@@ -576,6 +577,8 @@
                 html: `
                     <div class="mb-2 text-left text-sm text-gray-400">Tên Gia Tộc mới (để trống nếu giữ nguyên):</div>
                     <input id="swal-clan-name" class="swal2-input" value="${clan.name}">
+                    <div class="mb-2 mt-4 text-left text-sm text-gray-400">Mô tả / Thông báo:</div>
+                    <textarea id="swal-clan-alert" class="swal2-textarea" style="margin-top: 0">${clan.alert || ''}</textarea>
                     <div class="mb-2 mt-4 text-left text-sm text-gray-400">Level:</div>
                     <input id="swal-clan-level" type="number" class="swal2-input" value="${clan.level}">
                     <div class="mb-2 mt-4 text-left text-sm text-gray-400">Tên Tộc Trưởng mới (để trống nếu giữ nguyên):</div>
@@ -592,6 +595,7 @@
                 preConfirm: () => {
                     return [
                         document.getElementById('swal-clan-name').value,
+                        document.getElementById('swal-clan-alert').value,
                         document.getElementById('swal-clan-level').value,
                         document.getElementById('swal-clan-main').value,
                         document.getElementById('swal-clan-assist').value
@@ -599,11 +603,75 @@
                 }
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    const [name, level, main_name, assist_name] = result.value;
+                    const [name, alert, level, main_name, assist_name] = result.value;
                     try {
-                        const data = await apiCall('/clans/update', 'POST', { id, name, level, main_name, assist_name });
+                        const data = await apiCall('/clans/update', 'POST', { id, name, alert, level, main_name, assist_name });
                         showToast('Thành công', data.message);
                         loadClans();
+                    } catch (e) {
+                        showToast('Lỗi', e.message, 'red');
+                    }
+                }
+            });
+        }
+
+        async function openClanMembersModal(id) {
+            try {
+                const members = await apiCall('/clans/' + id + '/members');
+                let html = '<div class="overflow-y-auto max-h-64 mt-4"><table class="w-full text-left text-sm text-gray-300"><thead><tr class="border-b border-gray-600"><th class="pb-2">Tên</th><th class="pb-2">Cấp độ</th><th class="pb-2">Chức vụ</th><th class="pb-2 text-right">Thao tác</th></tr></thead><tbody>';
+                
+                if (members.length === 0) {
+                    html += '<tr><td colspan="4" class="py-4 text-center text-gray-500">Chưa có thành viên nào</td></tr>';
+                } else {
+                    members.forEach(m => {
+                        let role = m.type === 2 ? '<span class="text-red-400 font-bold">Tộc trưởng</span>' : (m.type === 1 ? '<span class="text-orange-400 font-bold">Phó tộc</span>' : 'Thành viên');
+                        html += `
+                            <tr class="border-b border-gray-700">
+                                <td class="py-2">${m.name}</td>
+                                <td class="py-2">Lv ${m.level}</td>
+                                <td class="py-2">${role}</td>
+                                <td class="py-2 text-right">
+                                    <button onclick="removeClanMember(${id}, '${m.name}')" class="text-red-400 hover:text-red-300"><i class="fas fa-user-minus"></i> Đuổi</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                html += '</tbody></table></div>';
+                
+                Swal.fire({
+                    title: 'Danh sách Thành Viên',
+                    html: html,
+                    background: '#1f2937',
+                    color: '#fff',
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    width: '600px'
+                });
+            } catch(e) {
+                showToast('Lỗi', e.message, 'red');
+            }
+        }
+        
+        // Cần gán vào window để button html có thể gọi được khi modal đang mở
+        window.removeClanMember = async function(id, member_name) {
+            Swal.fire({
+                title: 'Xác nhận',
+                text: `Bạn có chắc chắn muốn đuổi ${member_name} khỏi gia tộc?`,
+                icon: 'warning',
+                background: '#1f2937',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Đuổi ngay',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const data = await apiCall('/clans/remove-member', 'POST', { id, member_name });
+                        showToast('Thành công', data.message);
+                        // Refresh the members modal
+                        openClanMembersModal(id);
                     } catch (e) {
                         showToast('Lỗi', e.message, 'red');
                     }
