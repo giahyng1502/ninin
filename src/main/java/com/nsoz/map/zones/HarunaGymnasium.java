@@ -27,7 +27,7 @@ public class HarunaGymnasium extends Gymnasium {
 
     @Override
     public void initBot() {
-        Bot bot = Bot.builder().id(-11111).name("Thầy Kazeto")
+        Bot bot = Bot.builder().id(-11111).name("Thầy Lộc")
                 .level(50)
                 .typePk(Char.PK_DOSAT)
                 .build();

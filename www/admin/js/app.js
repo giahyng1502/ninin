@@ -288,14 +288,14 @@
         }
 
         function switchPlayerTab(tab) {
-            const tabs = ['money', 'item', 'explevel', 'bag'];
+            const tabs = ['money', 'item', 'explevel', 'bag', 'honor'];
             tabs.forEach(t => {
                 if (t === tab) {
                     document.getElementById(`tab-${t}`).classList.remove('hidden');
-                    document.getElementById(`tab-btn-${t}`).className = 'flex-1 py-3 font-semibold border-b-2 border-purple-500 text-purple-400 transition-colors';
+                    document.getElementById(`tab-btn-${t}`).className = 'flex-1 py-2 px-2 text-sm font-semibold border-b-2 border-purple-500 text-purple-400 transition-colors';
                 } else {
                     document.getElementById(`tab-${t}`).classList.add('hidden');
-                    document.getElementById(`tab-btn-${t}`).className = 'flex-1 py-3 font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition-colors';
+                    document.getElementById(`tab-btn-${t}`).className = 'flex-1 py-2 px-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition-colors';
                 }
             });
         }
@@ -334,6 +334,16 @@
                 showToast('Thành công', data.message);
                 closeModal('modalPlayer');
                 loadPlayers();
+            } catch(e) {}
+        }
+
+        async function submitPlayerHonorPoints() {
+            const id = document.getElementById('buffPlayerId').value;
+            const point = parseInt(document.getElementById('buffHonorPoint').value) || 0;
+            try {
+                const data = await apiCall('/players/add-honor-points', 'POST', { id, point });
+                showToast('Thành công', data.message);
+                closeModal('modalPlayer');
             } catch(e) {}
         }
 
@@ -489,6 +499,152 @@
                 closeModal('modalGiftItem');
             } catch(e) {}
         }
+
+        // ================= CLANS LOGIC =================
+        let clans = [];
+        
+        async function loadClans(page = 1) {
+            const search = document.getElementById('searchClanInput').value;
+            try {
+                const res = await apiCall(`/clans?page=${page}&q=${encodeURIComponent(search)}`);
+                clans = res.data;
+                const tbody = document.getElementById('clansTableBody');
+                
+                if (clans.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">Không tìm thấy gia tộc nào</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = clans.map(c => `
+                    <tr class="hover:bg-dark-700 transition-colors">
+                        <td class="p-4 font-mono text-gray-400">#${c.id}</td>
+                        <td class="p-4 font-bold text-orange-400">${c.name}</td>
+                        <td class="p-4 text-gray-300">${c.main_name}</td>
+                        <td class="p-4 text-gray-400">${c.assist_name || '-'}</td>
+                        <td class="p-4"><span class="bg-gray-700 text-white px-2 py-1 rounded text-xs font-bold">Lv ${c.level}</span></td>
+                        <td class="p-4 text-right space-x-2">
+                            <button onclick="openUpdateClanModal(${c.id})" class="text-blue-400 hover:text-blue-300 p-2"><i class="fas fa-edit"></i> Sửa</button>
+                            <button onclick="openAddMemberModal(${c.id})" class="text-green-400 hover:text-green-300 p-2"><i class="fas fa-user-plus"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {}
+        }
+
+        function searchClans() {
+            loadClans(1);
+        }
+
+        function openCreateClanModal() {
+            Swal.fire({
+                title: 'Tạo Gia Tộc',
+                html: `
+                    <input id="swal-clan-name" class="swal2-input" placeholder="Tên gia tộc">
+                    <input id="swal-clan-main" class="swal2-input" placeholder="Tên tộc trưởng (Nhân vật)">
+                `,
+                focusConfirm: false,
+                background: '#1f2937',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonText: 'Tạo Ngay',
+                confirmButtonColor: '#10b981',
+                preConfirm: () => {
+                    return [
+                        document.getElementById('swal-clan-name').value,
+                        document.getElementById('swal-clan-main').value
+                    ]
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const [name, main_name] = result.value;
+                    try {
+                        const data = await apiCall('/clans/create', 'POST', { name, main_name });
+                        showToast('Thành công', data.message);
+                        loadClans();
+                    } catch (e) {}
+                }
+            });
+        }
+
+        function openUpdateClanModal(id) {
+            const clan = clans.find(c => c.id === id);
+            if(!clan) return;
+            Swal.fire({
+                title: 'Cập nhật Gia Tộc',
+                html: `
+                    <div class="mb-2 text-left text-sm text-gray-400">Level:</div>
+                    <input id="swal-clan-level" type="number" class="swal2-input" value="${clan.level}">
+                    <div class="mb-2 mt-4 text-left text-sm text-gray-400">Tên Tộc Trưởng mới (để trống nếu giữ nguyên):</div>
+                    <input id="swal-clan-main" class="swal2-input" value="${clan.main_name}">
+                    <div class="mb-2 mt-4 text-left text-sm text-gray-400">Tên Phó Tộc mới:</div>
+                    <input id="swal-clan-assist" class="swal2-input" value="${clan.assist_name || ''}">
+                `,
+                focusConfirm: false,
+                background: '#1f2937',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonText: 'Cập nhật',
+                confirmButtonColor: '#3b82f6',
+                preConfirm: () => {
+                    return [
+                        document.getElementById('swal-clan-level').value,
+                        document.getElementById('swal-clan-main').value,
+                        document.getElementById('swal-clan-assist').value
+                    ]
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const [level, main_name, assist_name] = result.value;
+                    try {
+                        const data = await apiCall('/clans/update', 'POST', { id, level, main_name, assist_name });
+                        showToast('Thành công', data.message);
+                        loadClans();
+                    } catch (e) {}
+                }
+            });
+        }
+
+        function openAddMemberModal(id) {
+            Swal.fire({
+                title: 'Thêm Thành Viên',
+                input: 'text',
+                inputLabel: 'Nhập tên nhân vật',
+                inputPlaceholder: 'Tên nhân vật...',
+                background: '#1f2937',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonText: 'Thêm',
+                confirmButtonColor: '#10b981',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Vui lòng nhập tên nhân vật!'
+                    }
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const member_name = result.value;
+                    try {
+                        const data = await apiCall('/clans/add-member', 'POST', { id, member_name });
+                        showToast('Thành công', data.message);
+                        loadClans();
+                    } catch (e) {}
+                }
+            });
+        }
+        
+        // Global load items dict
+        async function loadItemsDict() {
+            try {
+                itemsDict = await apiCall('/items/dict', 'GET');
+            } catch(e) {}
+        }
+        
+        // Init
+        loadUsers();
+        loadPlayers();
+        loadItemsDict();
+        loadClans();
+
         window.itemDict = {};
         
         async function loadItemDict() {

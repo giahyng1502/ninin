@@ -228,6 +228,41 @@ app.post('/api/players/update-task', checkAuth, async (req, res) => {
     }
 });
 
+// Nâng max điểm danh vọng cho nhân vật
+app.post('/api/players/add-honor-points', checkAuth, async (req, res) => {
+    const { id, point } = req.body;
+    try {
+        const p = parseInt(point) || 0;
+        if (p < 0) return res.status(400).json({ error: 'Điểm không hợp lệ' });
+        
+        const [rows] = await pool.query('SELECT u.online AS online FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
+        if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi thực hiện.' });
+
+        await pool.query(`
+            UPDATE players 
+            SET data = JSON_SET(
+                data, 
+                '$.pointAo', ?,
+                '$.pointVuKhi', ?,
+                '$.pointNon', ?,
+                '$.pointLien', ?,
+                '$.pointGangTay', ?,
+                '$.pointNhan', ?,
+                '$.pointQuan', ?,
+                '$.pointNgocBoi', ?,
+                '$.pointGiay', ?,
+                '$.pointPhu', ?
+            ) 
+            WHERE id = ?`, 
+        [p, p, p, p, p, p, p, p, p, p, id]);
+        
+        res.json({ success: true, message: `Đã cộng ${p} điểm danh vọng mỗi loại thành công!` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Thêm vật phẩm vào túi đồ nhân vật bằng ID (Tự động đúc chỉ số qua Giftcode)
 app.post('/api/players/add-item', checkAuth, async (req, res) => {
     const { id, itemId, quantity, isLock, upgrade, sys } = req.body;
@@ -443,6 +478,125 @@ app.get('/api/items/dict', checkAuth, async (req, res) => {
         const dict = {};
         rows.forEach(r => dict[r.id] = r.name);
         res.json(dict);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ================= CLANS API =================
+
+// Lấy danh sách gia tộc
+app.get('/api/clans', checkAuth, async (req, res) => {
+    const search = req.query.q || '';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = 50;
+    const offset = (page - 1) * limit;
+
+    try {
+        const query = search 
+            ? 'SELECT * FROM clan WHERE name LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?'
+            : 'SELECT * FROM clan ORDER BY id DESC LIMIT ? OFFSET ?';
+        const countQuery = search ? 'SELECT COUNT(*) as total FROM clan WHERE name LIKE ?' : 'SELECT COUNT(*) as total FROM clan';
+        const params = search ? [`%${search}%`, limit, offset] : [limit, offset];
+        const countParams = search ? [`%${search}%`] : [];
+        
+        const [rows] = await pool.query(query, params);
+        const [countResult] = await pool.query(countQuery, countParams);
+        
+        res.json({ data: rows, total: countResult[0].total });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Tạo mới gia tộc
+app.post('/api/clans/create', checkAuth, async (req, res) => {
+    const { name, main_name } = req.body;
+    if (!name || !main_name) return res.status(400).json({ error: 'Tên gia tộc và Tên tộc trưởng không được để trống' });
+    try {
+        const [existing] = await pool.query('SELECT id FROM clan WHERE name = ?', [name]);
+        if (existing.length > 0) return res.status(400).json({ error: 'Tên gia tộc đã tồn tại' });
+        
+        const [player] = await pool.query('SELECT id, class FROM players WHERE name = ?', [main_name]);
+        if (player.length === 0) return res.status(404).json({ error: 'Không tìm thấy người chơi này để làm tộc trưởng' });
+
+        const [insertResult] = await pool.query(
+            'INSERT INTO clan (name, main_name, alert, coin, level, exp, item_level, open_dun, use_card) VALUES (?, ?, "", 0, 1, 0, 0, 1, 1)',
+            [name, main_name]
+        );
+        
+        const clanId = insertResult.insertId;
+        
+        await pool.query(
+            'INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 2)',
+            [main_name, player[0].class, clanId]
+        );
+        
+        // Update players clan
+        await pool.query('UPDATE players SET clan = ? WHERE name = ?', [clanId, main_name]);
+        
+        res.json({ success: true, message: 'Tạo Gia Tộc thành công! Lưu ý: Game Server cần khởi động lại để tải Gia tộc mới.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Cập nhật gia tộc (Đổi trưởng/phó tộc, level)
+app.post('/api/clans/update', checkAuth, async (req, res) => {
+    const { id, level, main_name, assist_name } = req.body;
+    try {
+        const lv = parseInt(level) || 1;
+        
+        // Ensure members exist before assigning roles
+        if (main_name) {
+            const [p1] = await pool.query('SELECT id, class FROM players WHERE name = ?', [main_name]);
+            if (p1.length === 0) return res.status(404).json({ error: `Không tìm thấy nhân vật ${main_name}` });
+            
+            // Upsert clan_member for main_name (Tộc Trưởng type 2)
+            const [m1] = await pool.query('SELECT id FROM clan_member WHERE name = ? AND clan = ?', [main_name, id]);
+            if (m1.length > 0) {
+                await pool.query('UPDATE clan_member SET type = 2 WHERE name = ? AND clan = ?', [main_name, id]);
+            } else {
+                await pool.query('INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 2)', [main_name, p1[0].class, id]);
+                await pool.query('UPDATE players SET clan = ? WHERE name = ?', [id, main_name]);
+            }
+        }
+        
+        if (assist_name) {
+            const [p2] = await pool.query('SELECT id, class FROM players WHERE name = ?', [assist_name]);
+            if (p2.length === 0) return res.status(404).json({ error: `Không tìm thấy nhân vật ${assist_name}` });
+            
+            // Upsert clan_member for assist_name (Phó tộc type 1)
+            const [m2] = await pool.query('SELECT id FROM clan_member WHERE name = ? AND clan = ?', [assist_name, id]);
+            if (m2.length > 0) {
+                await pool.query('UPDATE clan_member SET type = 1 WHERE name = ? AND clan = ?', [assist_name, id]);
+            } else {
+                await pool.query('INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 1)', [assist_name, p2[0].class, id]);
+                await pool.query('UPDATE players SET clan = ? WHERE name = ?', [id, assist_name]);
+            }
+        }
+        
+        await pool.query('UPDATE clan SET level = ?, main_name = ?, assist_name = ? WHERE id = ?', [lv, main_name, assist_name, id]);
+        
+        res.json({ success: true, message: 'Cập nhật thông tin Gia Tộc thành công! Lưu ý: Server cần khởi động lại để cập nhật.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Thêm thành viên vào gia tộc
+app.post('/api/clans/add-member', checkAuth, async (req, res) => {
+    const { id, member_name } = req.body;
+    try {
+        const [player] = await pool.query('SELECT id, class, clan FROM players WHERE name = ?', [member_name]);
+        if (player.length === 0) return res.status(404).json({ error: `Không tìm thấy nhân vật ${member_name}` });
+        if (player[0].clan !== -1 && player[0].clan !== 0) return res.status(400).json({ error: `Nhân vật ${member_name} đã nằm trong một gia tộc khác` });
+
+        // Type 0 is normal member
+        await pool.query('INSERT INTO clan_member (name, class_id, level, clan, point_clan, point_clan_week, type) VALUES (?, ?, 1, ?, 0, 0, 0)', [member_name, player[0].class, id]);
+        await pool.query('UPDATE players SET clan = ? WHERE name = ?', [id, member_name]);
+        
+        res.json({ success: true, message: `Thêm ${member_name} vào Gia Tộc thành công!` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

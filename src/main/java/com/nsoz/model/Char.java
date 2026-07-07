@@ -12070,7 +12070,7 @@ public class Char {
             getService().openUIMenu();
         }));
         menus.add(new Menu(CMDMenu.EXECUTE, "Nói chuyện", () -> {
-            String talk = (String) NinjaUtils.randomObject("Bạn may mắn lắm mới gặp được ta đó, ta vốn là Thần Gió mà!", "So với các trường khác, trường Gió là tốt nhất", "Một số học sinh trường gió của chúng ta có thể chấp hai học sinh các trường kia.");
+            String talk = (String) NinjaUtils.randomObject("Chào các em, thầy là Lộc, thầy dạy tiếng Trung tại DILA!", "Học tiếng Trung không khó, quan trọng là các em phải chăm chỉ như học trò của thầy tại DILA.", "Đến với DILA, các em sẽ giỏi tiếng Trung như thầy Lộc.");
             getService().npcChat(NpcName.THAY_KAZETO, talk);
             if (taskId == TaskName.NV_TIM_HIEU_3_TRUONG && taskMain != null && taskMain.index == 3) {
                 taskNext();
