@@ -541,9 +541,9 @@ app.post('/api/clans/create', checkAuth, async (req, res) => {
     }
 });
 
-// Cập nhật gia tộc (Đổi trưởng/phó tộc, level, tên gia tộc)
+// Cập nhật gia tộc (Đổi trưởng/phó tộc, level, tên gia tộc, mô tả)
 app.post('/api/clans/update', checkAuth, async (req, res) => {
-    const { id, level, main_name, assist_name, name } = req.body;
+    const { id, level, main_name, assist_name, name, alert } = req.body;
     try {
         const lv = parseInt(level) || 1;
         
@@ -582,13 +582,46 @@ app.post('/api/clans/update', checkAuth, async (req, res) => {
             }
         }
         
-        if (name) {
-            await pool.query('UPDATE clan SET level = ?, main_name = ?, assist_name = ?, name = ? WHERE id = ?', [lv, main_name, assist_name, name, id]);
-        } else {
-            await pool.query('UPDATE clan SET level = ?, main_name = ?, assist_name = ? WHERE id = ?', [lv, main_name, assist_name, id]);
+        let query = 'UPDATE clan SET level = ?, main_name = ?, assist_name = ?';
+        let params = [lv, main_name || '', assist_name || ''];
+        
+        if (name !== undefined) {
+            query += ', name = ?';
+            params.push(name);
+        }
+        if (alert !== undefined) {
+            query += ', alert = ?';
+            params.push(alert);
         }
         
+        query += ' WHERE id = ?';
+        params.push(id);
+        
+        await pool.query(query, params);
+        
         res.json({ success: true, message: 'Cập nhật thông tin Gia Tộc thành công! Lưu ý: Server cần khởi động lại để cập nhật.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Xem danh sách thành viên gia tộc
+app.get('/api/clans/:id/members', checkAuth, async (req, res) => {
+    try {
+        const [members] = await pool.query('SELECT * FROM clan_member WHERE clan = ? ORDER BY type DESC, point_clan DESC', [req.params.id]);
+        res.json(members);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Xóa thành viên khỏi gia tộc
+app.post('/api/clans/remove-member', checkAuth, async (req, res) => {
+    const { id, member_name } = req.body;
+    try {
+        await pool.query('DELETE FROM clan_member WHERE clan = ? AND name = ?', [id, member_name]);
+        await pool.query('UPDATE players SET clan = -1 WHERE name = ?', [member_name]);
+        res.json({ success: true, message: `Đã đuổi ${member_name} khỏi gia tộc!` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
