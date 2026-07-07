@@ -70,13 +70,11 @@ public class LunarNewYear extends Event {
         itemsThrownFromMonsters.add(100, ItemName.DAU_XANH2);
         itemsThrownFromMonsters.add(100, ItemName.LAT_TRE);
 
-
         keyEventPoint.add(EventPoint.DIEM_TIEU_XAI);
         keyEventPoint.add(TOP_LUCKY_CHARM);
         keyEventPoint.add(TOP_MAKE_CHUNG_CAKE);
         keyEventPoint.add(MYSTERY_BOX_LEFT);
         keyEventPoint.add(ENVELOPE);
-
 
         itemsRecFromGold2Item.add(1, ItemName.HOA_KY_LAN);
         itemsRecFromGold2Item.add(1, ItemName.SHIRAIJI);
@@ -124,8 +122,8 @@ public class LunarNewYear extends Event {
     public void spawnPrincipal() {
         List<BotInfo> botInfoList = new ArrayList<>();
         botInfoList.add(new BotInfo(MapName.TRUONG_HIROSAKI, "Cô Toyotomi", 44, 45, 46));
-        botInfoList.add(new BotInfo(MapName.TRUONG_OOKAZA, "Thầy Ookamesama", 53, 54, 55));
-        botInfoList.add(new BotInfo(MapName.TRUONG_HARUNA, "Thầy Kazeto", 65, 66, 67));
+        botInfoList.add(new BotInfo(MapName.TRUONG_OOKAZA, "Thầy Khải", 53, 54, 55));
+        botInfoList.add(new BotInfo(MapName.TRUONG_HARUNA, "Thầy Lộc", 65, 66, 67));
 
         for (BotInfo info : botInfoList) {
             Map map = MapManager.getInstance().find(info.mapId);
@@ -177,8 +175,8 @@ public class LunarNewYear extends Event {
     }
 
     private void makeChungCake(Char p, int amount) {
-        int[][] itemRequires = new int[][]{{ItemName.NEP, 1}, {ItemName.LA_DONG, 1}, {ItemName.DAU_XANH2, 1},
-                {ItemName.LAT_TRE, 1}, {ItemName.THIT_HEO, 1}};
+        int[][] itemRequires = new int[][] { { ItemName.NEP, 1 }, { ItemName.LA_DONG, 1 }, { ItemName.DAU_XANH2, 1 },
+                { ItemName.LAT_TRE, 1 }, { ItemName.THIT_HEO, 1 } };
         int itemIdReceive = ItemName.BANH_CHUNG;
         boolean isDone = makeEventItem(p, amount, itemRequires, 0, 0, 0, itemIdReceive);
         if (isDone) {
@@ -188,14 +186,14 @@ public class LunarNewYear extends Event {
     }
 
     private void makeTetCake(Char p, int amount) {
-        int[][] itemRequires = new int[][]{{ItemName.NEP, 1}, {ItemName.LA_DONG, 1}, {ItemName.DAU_XANH2, 1},
-                {ItemName.LAT_TRE, 1}};
+        int[][] itemRequires = new int[][] { { ItemName.NEP, 1 }, { ItemName.LA_DONG, 1 }, { ItemName.DAU_XANH2, 1 },
+                { ItemName.LAT_TRE, 1 } };
         int itemIdReceive = ItemName.BANH_TET;
         makeEventItem(p, amount, itemRequires, 0, 90000, 0, itemIdReceive);
     }
 
     private void makeFirework(Char p, int amount) {
-        int[][] itemRequires = new int[][]{{ItemName.MANH_PHAO_HOA, 10}};
+        int[][] itemRequires = new int[][] { { ItemName.MANH_PHAO_HOA, 10 } };
         int itemIdReceive = ItemName.PHAO_HOA;
         boolean isDone = makeEventItem(p, amount, itemRequires, 20, 0, 0, itemIdReceive);
         if (isDone) {
@@ -347,9 +345,6 @@ public class LunarNewYear extends Event {
             p.getService().openUIMenu();
         }));
 
-
-
-
         p.menus.add(new Menu(CMDMenu.EXECUTE, "Đua TOP", () -> {
             p.menus.clear();
             p.menus.add(new Menu(CMDMenu.EXECUTE, "Bùa may mắn", () -> {
@@ -438,7 +433,8 @@ public class LunarNewYear extends Event {
             sb.append("Bánh tét : 1 nếp + 1 lá dong + 1 đậu xanh + 1 lạt tre + 90k xu\n\n" +
                     "Bánh chưng : 1 nếp + 1 lá dong + 1 đậu xanh + 1 lạt tre + 1 thịt heo\n\n" +
                     "Tỉ lệ mở đồ bánh chưng và bánh tét là như nhau\n\n" +
-                    "Đồ vĩnh viễn lên ktg khi mở bánh bao gồm : 5 loại mặt nạ trang bị 2, bạch hồ, phượng hoàng băng, hỏa kì lân, lân sư vũ").append("\n");
+                    "Đồ vĩnh viễn lên ktg khi mở bánh bao gồm : 5 loại mặt nạ trang bị 2, bạch hồ, phượng hoàng băng, hỏa kì lân, lân sư vũ")
+                    .append("\n");
             p.getService().showAlert("Hướng Dẫn", sb.toString());
         }));
 
