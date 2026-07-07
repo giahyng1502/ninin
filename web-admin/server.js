@@ -236,19 +236,45 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
         if (rows[0].online === 1) return res.status(400).json({ error: 'Nhân vật đang Online! Vui lòng đăng xuất trước khi nhận quà.' });
         
-        const newItem = {
-            id: parseInt(itemId),
-            quantity: parseInt(quantity) || 1,
-            isLock: isLock ? true : false,
-            upgrade: parseInt(upgrade) || 0,
-            sys: 0,
-            expire: -1,
-            yen: 0,
-            options: []
-        };
-        const itemStr = JSON.stringify(newItem);
-        
-        await pool.query("UPDATE players SET bag = JSON_ARRAY_APPEND(IFNULL(bag, '[]'), '$', JSON_EXTRACT(?, '$')) WHERE id = ?", [itemStr, id]);
+        const [itemData] = await pool.query('SELECT isUpToUp FROM item WHERE id = ?', [itemId]);
+        const isUpToUp = itemData.length > 0 ? itemData[0].isUpToUp : 0;
+        const q = parseInt(quantity) || 1;
+
+        if (isUpToUp === 1) {
+            const newItem = {
+                id: parseInt(itemId),
+                quantity: q,
+                isLock: isLock ? true : false,
+                upgrade: parseInt(upgrade) || 0,
+                sys: 0,
+                expire: -1,
+                yen: 0,
+                options: []
+            };
+            const itemStr = JSON.stringify(newItem);
+            await pool.query("UPDATE players SET bag = JSON_ARRAY_APPEND(IFNULL(bag, '[]'), '$', JSON_EXTRACT(?, '$')) WHERE id = ?", [itemStr, id]);
+        } else {
+            const newItem = {
+                id: parseInt(itemId),
+                quantity: 1,
+                isLock: isLock ? true : false,
+                upgrade: parseInt(upgrade) || 0,
+                sys: 0,
+                expire: -1,
+                yen: 0,
+                options: []
+            };
+            const itemStr = JSON.stringify(newItem);
+            let queryStr = "UPDATE players SET bag = JSON_ARRAY_APPEND(IFNULL(bag, '[]')";
+            let params = [];
+            for (let i = 0; i < q; i++) {
+                queryStr += ", '$', JSON_EXTRACT(?, '$')";
+                params.push(itemStr);
+            }
+            queryStr += ") WHERE id = ?";
+            params.push(id);
+            await pool.query(queryStr, params);
+        }
         
         res.json({ success: true, message: 'Đã thêm vật phẩm trực tiếp vào túi thành công! (Vào game để kiểm tra)' });
     } catch (err) {
@@ -266,19 +292,45 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
         
         const player = players[0];
         
-        const newItem = {
-            id: parseInt(itemId),
-            quantity: parseInt(quantity) || 1,
-            isLock: isLock ? true : false,
-            upgrade: parseInt(upgrade) || 0,
-            sys: 0,
-            expire: -1,
-            yen: 0,
-            options: []
-        };
-        const itemStr = JSON.stringify(newItem);
-        
-        await pool.query("UPDATE players SET bag = JSON_ARRAY_APPEND(IFNULL(bag, '[]'), '$', JSON_EXTRACT(?, '$')) WHERE id = ?", [itemStr, player.id]);
+        const [itemData] = await pool.query('SELECT isUpToUp FROM item WHERE id = ?', [itemId]);
+        const isUpToUp = itemData.length > 0 ? itemData[0].isUpToUp : 0;
+        const q = parseInt(quantity) || 1;
+
+        if (isUpToUp === 1) {
+            const newItem = {
+                id: parseInt(itemId),
+                quantity: q,
+                isLock: isLock ? true : false,
+                upgrade: parseInt(upgrade) || 0,
+                sys: 0,
+                expire: -1,
+                yen: 0,
+                options: []
+            };
+            const itemStr = JSON.stringify(newItem);
+            await pool.query("UPDATE players SET bag = JSON_ARRAY_APPEND(IFNULL(bag, '[]'), '$', JSON_EXTRACT(?, '$')) WHERE id = ?", [itemStr, player.id]);
+        } else {
+            const newItem = {
+                id: parseInt(itemId),
+                quantity: 1,
+                isLock: isLock ? true : false,
+                upgrade: parseInt(upgrade) || 0,
+                sys: 0,
+                expire: -1,
+                yen: 0,
+                options: []
+            };
+            const itemStr = JSON.stringify(newItem);
+            let queryStr = "UPDATE players SET bag = JSON_ARRAY_APPEND(IFNULL(bag, '[]')";
+            let params = [];
+            for (let i = 0; i < q; i++) {
+                queryStr += ", '$', JSON_EXTRACT(?, '$')";
+                params.push(itemStr);
+            }
+            queryStr += ") WHERE id = ?";
+            params.push(player.id);
+            await pool.query(queryStr, params);
+        }
         
         res.json({ success: true, message: `Đã thêm Item trực tiếp vào túi của ${playerName}! (Vào game để kiểm tra)` });
     } catch (err) {
