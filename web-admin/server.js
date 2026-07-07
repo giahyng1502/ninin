@@ -404,12 +404,32 @@ app.get('/api/maps', checkAuth, async (req, res) => {
 
 // Lấy danh sách Item
 app.get('/api/items', checkAuth, async (req, res) => {
-    const { search = '', page = 1, limit = 50 } = req.query;
+    const { search = '', category = '', page = 1, limit = 50 } = req.query;
     const offset = (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
     try {
-        let query = 'SELECT id, name, description, level FROM item WHERE name LIKE ? ORDER BY id ASC LIMIT ? OFFSET ?';
-        const [rows] = await pool.query(query, [`%${search}%`, parseInt(limit), offset]);
-        const [total] = await pool.query('SELECT COUNT(*) as count FROM item WHERE name LIKE ?', [`%${search}%`]);
+        let query = 'SELECT id, name, description, level, type FROM item WHERE name LIKE ?';
+        let countQuery = 'SELECT COUNT(*) as count FROM item WHERE name LIKE ?';
+        let params = [`%${search}%`];
+        
+        if (category) {
+            let typeCondition = '';
+            if (category === 'weapon') typeCondition = 'type IN (4, 5, 6, 7, 8, 9, 10)';
+            else if (category === 'equipment') typeCondition = 'type IN (0, 1, 2, 3, 11, 12, 14, 15, 16, 21, 23, 24, 25, 27)';
+            else if (category === 'mount') typeCondition = 'type IN (29, 33, 34)';
+            else if (category === 'material') typeCondition = 'type IN (13, 17, 18, 19, 20)';
+            else if (category === 'other') typeCondition = 'type NOT IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 21, 23, 24, 25, 27, 29, 33, 34, 13, 17, 18, 19, 20)';
+            
+            if (typeCondition) {
+                query += ` AND ${typeCondition}`;
+                countQuery += ` AND ${typeCondition}`;
+            }
+        }
+        
+        query += ' ORDER BY id ASC LIMIT ? OFFSET ?';
+        params.push(parseInt(limit), offset);
+        
+        const [rows] = await pool.query(query, params);
+        const [total] = await pool.query(countQuery, [`%${search}%`]);
         res.json({ data: rows, total: total[0].count });
     } catch (err) {
         res.status(500).json({ error: err.message });

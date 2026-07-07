@@ -218,9 +218,17 @@
         <section id="items" class="section-content">
             <div class="glass-panel rounded-2xl overflow-hidden shadow-xl mb-6 p-6">
                 <h2 class="text-xl font-bold mb-4">Từ Điển Vật Phẩm</h2>
-                <div class="flex space-x-4">
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <select id="itemDictCategory" onchange="searchItems(1)" class="bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-500 transition-colors w-full sm:w-48">
+                        <option value="">Tất cả Thể Loại</option>
+                        <option value="weapon">Vũ khí</option>
+                        <option value="equipment">Trang bị</option>
+                        <option value="mount">Thú cưỡi</option>
+                        <option value="material">Nguyên liệu</option>
+                        <option value="other">Khác</option>
+                    </select>
                     <input type="text" id="searchItemInput" onkeyup="if(event.key==='Enter') searchItems()" placeholder="Nhập tên vật phẩm..." class="flex-1 bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-500 transition-colors">
-                    <button onclick="searchItems()" class="px-6 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-lg transition-all shadow-lg shadow-yellow-500/30">
+                    <button onclick="searchItems(1)" class="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-lg transition-all shadow-lg shadow-yellow-500/30 whitespace-nowrap">
                         <i class="fas fa-search mr-2"></i>Tìm
                     </button>
                 </div>
@@ -580,20 +588,18 @@
                 <label class="block text-gray-400 text-sm font-bold mb-2">Tên người nhận (Tên nhân vật trong game):</label>
                 <input type="text" id="giftPlayerName" placeholder="Nhập chính xác tên nhân vật..." class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">
             </div>
-            <div class="flex space-x-4 mb-4">
-                <div class="flex-1">
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div>
                     <label class="block text-gray-400 text-sm font-bold mb-2">Số lượng:</label>
                     <input type="number" id="giftItemQty" value="1" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="mb-4">
-                        <label class="block text-gray-400 text-sm font-bold mb-2">Cấp độ (+):</label>
-                        <input type="number" id="giftItemUpgrade" value="0" min="0" max="16" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-400 text-sm font-bold mb-2">Hệ / Sao (sys):</label>
-                        <input type="number" id="giftItemSys" value="0" min="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
-                    </div>
+                <div>
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Cấp độ (+):</label>
+                    <input type="number" id="giftItemUpgrade" value="0" min="0" max="16" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Hệ / Sao (sys):</label>
+                    <input type="number" id="giftItemSys" value="0" min="0" class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
                 </div>
             </div>
             <div class="mb-6 flex items-center">

@@ -13949,6 +13949,7 @@ public class Char {
                         Item item = new Item((JSONObject) jso.get(i));
                         if (item == null || !item.has() || item.isExpired() || item.isRemoveItem(true) || isInList(item.template.id)) {
                             continue;
+                        }
                         if (item.index >= 0 && item.index < this.bag.length && this.bag[item.index] == null) {
                             this.bag[item.index] = item;
                         } else {
@@ -13970,6 +13971,7 @@ public class Char {
                         Item item = new Item((JSONObject) jso.get(i));
                         if (item == null || !item.has() || item.isExpired() || item.isRemoveItem(true)) {
                             continue;
+                        }
                         if (item.index >= 0 && item.index < this.box.length && this.box[item.index] == null) {
                             this.box[item.index] = item;
                         } else {

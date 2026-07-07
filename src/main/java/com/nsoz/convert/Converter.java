@@ -167,6 +167,7 @@ public class Converter {
             }
         }
         mount.setQuantity(1);
+        mount.fixMount();
         return mount;
     }
 

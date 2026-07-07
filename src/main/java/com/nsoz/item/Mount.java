@@ -88,7 +88,8 @@ public class Mount extends Item {
 // chỉ số pet
     public void fixMount() {
         if ((this.id == ItemName.HUYET_SAC_HUNG_LANG || this.id == ItemName.XICH_NHAN_NGAN_LANG
-                || this.id == ItemName.PHUONG_HOANG_BANG || this.id == ItemName.LAN_SU_VU) && this.isForever()
+                || this.id == ItemName.PHUONG_HOANG_BANG || this.id == ItemName.LAN_SU_VU
+                || this.id == ItemName.HOA_KY_LAN || this.id == ItemName.THIEN_NGUYET_CHI_NU) && this.isForever()
                 && this.sys > 1) {
             fixMountOption();
         }

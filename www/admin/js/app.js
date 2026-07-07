@@ -423,10 +423,11 @@
         async function searchItems(page = 1) {
             currentItemPage = page;
             const search = document.getElementById('searchItemInput').value;
+            const category = document.getElementById('itemDictCategory') ? document.getElementById('itemDictCategory').value : '';
             const tbody = document.getElementById('itemsTableBody');
             tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Đang tải...</td></tr>';
             try {
-                const res = await apiCall(`/items?search=${encodeURIComponent(search)}&page=${page}&limit=50`);
+                const res = await apiCall(`/items?search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}&page=${page}&limit=50`);
                 tbody.innerHTML = '';
                 if(res.data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Không tìm thấy vật phẩm</td></tr>';
