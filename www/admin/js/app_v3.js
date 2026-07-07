@@ -67,7 +67,7 @@
             activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-500/20');
             activeBtn.classList.remove('text-gray-400');
 
-            const titles = { dashboard: 'Bảng Điều Khiển', users: 'Quản lý Tài Khoản', players: 'Quản lý Nhân Vật', items: 'Từ Điển ID Vật Phẩm', giftcodes: 'Quản Lý Giftcode', settings: 'Cài Đặt Hệ Thống' };
+            const titles = { dashboard: 'Bảng Điều Khiển', users: 'Quản lý Tài Khoản', players: 'Quản lý Nhân Vật', clans: 'Quản lý Gia Tộc', items: 'Từ Điển ID Vật Phẩm', giftcodes: 'Quản Lý Giftcode', settings: 'Cài Đặt Hệ Thống' };
             document.getElementById('pageTitle').innerText = titles[id];
 
             if(id === 'users') loadUsers();
@@ -507,7 +507,7 @@
             const search = document.getElementById('searchClanInput').value;
             try {
                 const res = await apiCall(`/clans?page=${page}&q=${encodeURIComponent(search)}`);
-                clans = res.data;
+                clans = res.data || [];
                 const tbody = document.getElementById('clansTableBody');
                 
                 if (clans.length === 0) {
@@ -561,7 +561,9 @@
                         const data = await apiCall('/clans/create', 'POST', { name, main_name });
                         showToast('Thành công', data.message);
                         loadClans();
-                    } catch (e) {}
+                    } catch (e) {
+                        showToast('Lỗi', e.message, 'red');
+                    }
                 }
             });
         }
@@ -599,7 +601,9 @@
                         const data = await apiCall('/clans/update', 'POST', { id, level, main_name, assist_name });
                         showToast('Thành công', data.message);
                         loadClans();
-                    } catch (e) {}
+                    } catch (e) {
+                        showToast('Lỗi', e.message, 'red');
+                    }
                 }
             });
         }
@@ -627,7 +631,9 @@
                         const data = await apiCall('/clans/add-member', 'POST', { id, member_name });
                         showToast('Thành công', data.message);
                         loadClans();
-                    } catch (e) {}
+                    } catch (e) {
+                        showToast('Lỗi', e.message, 'red');
+                    }
                 }
             });
         }
