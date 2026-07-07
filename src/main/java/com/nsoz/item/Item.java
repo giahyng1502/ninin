@@ -653,15 +653,19 @@ public class Item {
             this.sys = parse.getByte("sys");
             this.upgrade = parse.getByte("upgrade");
             JSONArray ability = parse.getJSONArray("options");
-            int size2 = ability.size();
-            for (int c = 0; c < size2; c++) {
-                JSONArray jAbility = (JSONArray) ability.get(c);
-                int templateId = Integer.parseInt(jAbility.get(0).toString());
-                int param = Integer.parseInt(jAbility.get(1).toString());
-                if (templateId == 46 && param == 800) {
-                    param = 55;
+            if (ability != null && ability.size() > 0) {
+                int size2 = ability.size();
+                for (int c = 0; c < size2; c++) {
+                    JSONArray jAbility = (JSONArray) ability.get(c);
+                    int templateId = Integer.parseInt(jAbility.get(0).toString());
+                    int param = Integer.parseInt(jAbility.get(1).toString());
+                    if (templateId == 46 && param == 800) {
+                        param = 55;
+                    }
+                    this.options.add(new ItemOption(templateId, param));
                 }
-                this.options.add(new ItemOption(templateId, param));
+            } else {
+                initOption();
             }
             if (this.template.isTypeAdorn() || this.template.isTypeClothe() || this.template.isTypeWeapon()) {
                 this.gems = new ArrayList<>();

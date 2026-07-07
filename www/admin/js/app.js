@@ -353,6 +353,7 @@
             const itemId = document.getElementById('buffItemId').value;
             const qty = parseInt(document.getElementById('buffItemQty').value) || 1;
             const upgrade = parseInt(document.getElementById('buffItemUpgrade').value) || 0;
+            const sys = parseInt(document.getElementById('buffItemSys').value) || 0;
             const isLock = document.getElementById('buffItemLock').checked;
             
             if(!itemId) {
@@ -360,7 +361,7 @@
                 return;
             }
             try {
-                const data = await apiCall('/players/add-item', 'POST', { id, itemId, quantity: qty, isLock, upgrade });
+                const data = await apiCall('/players/add-item', 'POST', { id, itemId, quantity: qty, isLock, upgrade, sys });
                 showToast('Thành công', data.message);
                 closeModal('modalPlayer');
                 loadPlayers();
@@ -462,6 +463,7 @@
             document.getElementById('giftPlayerName').value = '';
             document.getElementById('giftItemQty').value = 1;
             document.getElementById('giftItemUpgrade').value = 0;
+            document.getElementById('giftItemSys').value = 0;
             const modal = document.getElementById('modalGiftItem');
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -475,12 +477,13 @@
             const playerName = document.getElementById('giftPlayerName').value;
             const qty = parseInt(document.getElementById('giftItemQty').value) || 1;
             const upgrade = parseInt(document.getElementById('giftItemUpgrade').value) || 0;
+            const sys = parseInt(document.getElementById('giftItemSys').value) || 0;
             const isLock = document.getElementById('giftItemLock').checked;
             
             if(!playerName) return showToast('Lỗi', 'Vui lòng nhập tên người nhận', 'red');
             
             try {
-                const data = await apiCall('/players/gift-item-by-name', 'POST', { playerName, itemId, quantity: qty, upgrade, isLock });
+                const data = await apiCall('/players/gift-item-by-name', 'POST', { playerName, itemId, quantity: qty, upgrade, isLock, sys });
                 showToast('Thành công', data.message);
                 closeModal('modalGiftItem');
             } catch(e) {}

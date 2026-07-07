@@ -230,7 +230,7 @@ app.post('/api/players/update-task', checkAuth, async (req, res) => {
 
 // Thêm vật phẩm vào túi đồ nhân vật bằng ID (Tự động đúc chỉ số qua Giftcode)
 app.post('/api/players/add-item', checkAuth, async (req, res) => {
-    const { id, itemId, quantity, isLock, upgrade } = req.body;
+    const { id, itemId, quantity, isLock, upgrade, sys } = req.body;
     try {
         const [rows] = await pool.query('SELECT p.id, u.online, p.giftcode_unpaid FROM players p JOIN users u ON p.user_id = u.id WHERE p.id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy nhân vật' });
@@ -246,7 +246,7 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
                 quantity: q,
                 isLock: isLock ? true : false,
                 upgrade: parseInt(upgrade) || 0,
-                sys: 0,
+                sys: parseInt(sys) || 0,
                 expire: -1,
                 yen: 0,
                 options: []
@@ -259,7 +259,7 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
                 quantity: 1,
                 isLock: isLock ? true : false,
                 upgrade: parseInt(upgrade) || 0,
-                sys: 0,
+                sys: parseInt(sys) || 0,
                 expire: -1,
                 yen: 0,
                 options: []
@@ -284,7 +284,7 @@ app.post('/api/players/add-item', checkAuth, async (req, res) => {
 
 // Thêm vật phẩm vào túi bằng Tên Nhân Vật (Dành cho tab Từ Điển)
 app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
-    const { playerName, itemId, quantity, isLock, upgrade } = req.body;
+    const { playerName, itemId, quantity, isLock, upgrade, sys } = req.body;
     try {
         const [players] = await pool.query('SELECT p.id, u.online FROM players p JOIN users u ON p.user_id = u.id WHERE p.name = ?', [playerName]);
         if (players.length === 0) return res.status(404).json({ error: 'Không tìm thấy tên nhân vật này' });
@@ -302,7 +302,7 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
                 quantity: q,
                 isLock: isLock ? true : false,
                 upgrade: parseInt(upgrade) || 0,
-                sys: 0,
+                sys: parseInt(sys) || 0,
                 expire: -1,
                 yen: 0,
                 options: []
@@ -315,7 +315,7 @@ app.post('/api/players/gift-item-by-name', checkAuth, async (req, res) => {
                 quantity: 1,
                 isLock: isLock ? true : false,
                 upgrade: parseInt(upgrade) || 0,
-                sys: 0,
+                sys: parseInt(sys) || 0,
                 expire: -1,
                 yen: 0,
                 options: []
